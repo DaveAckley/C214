@@ -1,0 +1,7 @@
+# Ignore emacs backup files
+*~
+
+# Ignore splat and ulam generated files
+.splatgen
+.gen
+
