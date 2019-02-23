@@ -2,6 +2,57 @@
 \symbol HC
 \color #55f
 \symmetries rotations
+local constant Unsigned cDISTANCE_BITS = 4u;
+local typedef Unsigned(cDISTANCE_BITS) Distance;
+local typedef EventWindow.SiteNum SiteNum;
+
+== Data members
+u Distance mDistances[4];  // WNSE
+
+== Methods
+u Unsigned getWestIndex() {
+.    EventWindow ew;
+.    C2D c(-1,0);
+.    SiteNum sn = ew.getSiteNumber(c);
+.    return sn-1u;
+. }
+
+== Rules (Update distance estimates)
+
+given @ isa HardCyt
+given i isa InnerMembrane
+given h isa HardCyt
+let x = i|h
+check @ {
+.   DebugUtils du;
+.   du.print("CH@");
+.   HardCyt & h = (HardCyt&) ew[0];
+.   Unsigned westIdx = h.getWestIndex();
+.   if ($i.$nvotes > 0u) h.mDistances[westIdx] = 0u;
+.   else if ($h.$nvotes > 0u) {
+.     du.print("HNV");
+.     SiteNum sn = (SiteNum) $h.$winsn;
+.     du.print(sn);
+.     HardCyt & h2 = (HardCyt&) ew[sn];
+.     du.print(h);
+.     du.print(h2);
+.     du.print(h.mDistances[westIdx]);
+.     du.print(h2.mDistances[westIdx]);
+.     Distance incr = (Distance) (h2.mDistances[westIdx]+1u);
+.     du.print("INC");
+.     du.print(incr);
+.     h.mDistances[westIdx] = incr;
+.     du.print(h.mDistances[westIdx]);
+.     du.print(h2.mDistances[westIdx]);
+.     du.print(h);
+.     du.print(h2);
+.   }
+.   return false;  
+. }
+
+ x.@ -> ...
+
+
 
 == Rules (Growth)
 
@@ -23,6 +74,7 @@ change @ {
     rrr      ...
      e        .
 
+
 == Rules (Maintenance with prejudice)
 
 given @ isa HardCyt
@@ -32,8 +84,8 @@ change @ {
 .   if ($w.$nvotes > 0u &&  // If an H is misaligned with us
 .       $h.$nvotes > 2u)    // And we have significant support
 .     ew[$w.$winsn] = Res.instanceof;// The weirdo decays
-. }        
-           
+. }
+
      h        .
     www      ...
    hw@wh -> ..@..

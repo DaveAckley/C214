@@ -10,9 +10,9 @@ u Generation mGen = 2;  // Grow for 32 total
 u Bool shouldImport(Atom atom) {
 .   DebugUtils du;
 .   Bool ret = (mGen < mGen.maxof) && atom is Res;
-.   du.print("shouldImport");
-.   du.print(atom);
-.   du.print(ret);
+.//   du.print("shouldImport");
+.//   du.print(atom);
+.//   du.print(ret);
 .   return ret;
 . }
 
@@ -57,7 +57,7 @@ change @ { ew[$cursn] = ew[0]; }
 given @ isa QCyt { return $self.mGen < $self.mGen.maxof; }
 given Q isa QCyt
 
- Q.@  ->  @.Q     # Keep circulating the tapes
+# Q.@  ->  @.Q     # Keep circulating the tapes
 
   @  ->  @      # Or hold
 
