@@ -1,6 +1,0 @@
-{1}  -*- text -*- 
-[0:
-
-Thu Feb 21 10:43:49 2019 SEE ../../../notes/ for notes.
-
-:0]

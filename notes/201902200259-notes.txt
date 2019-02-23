@@ -1,0 +1,146 @@
+{17}  -*- text -*- 
+[0:
+
+Wed Feb 20 03:00:03 2019 OK time for an ALIFE19 paper.  The goal is
+some kind of more structured reproduction than we saw in the 2018
+'cancer cells' demo.  The plan, such as it is, is
+
+(1) to build a quasicrystal-like molecule, something like the
+    generalized crystals from 2014 (like
+    https://www.youtube.com/watch?v=C6h3gvaKE7E ) and then
+
+(2) get them to move with something like the asymmetric diffusion from
+    2011 ( https://youtu.be/ykeNAmJ8pa4 ), and
+
+(3) put them all in some C211-like bag (like 2018), for some good
+    reason -- perhaps using the membrne to sense the environment and
+    determine when conditions are plausible 
+
+(4) to perform a reproduction by having each guy in the crystal twin
+    and then pull apart.
+
+[1:
+
+Wed Feb 20 03:26:34 2019 Well but when you write it all down like that
+it seems like a lot of work for three weeks to a finished paper.
+
+[2:
+
+Wed Feb 20 03:27:10 2019 So let's get some quick breakdown TODO to get
+us started.
+
+[3: Wed Feb 20 06:12:43 2019
+DONE Quasicrystal.splat  :3] - Build a telomere-controlled quasicrystal in SPLAT, requiring
+
+[4: DONE  :4] - Get SPLAT set up and working in this directory
+
+Foggit let's just do that right now and then come back.  (Although I'm
+tempted to say: That builds from Res. [5: Wed Feb 20 06:13:12 2019
+DONE ResQX.splat :5])
+
+:2]
+
+:1]
+
+:0]
+[6:
+
+Wed Feb 20 06:13:39 2019 So we currently are going for a distance 3
+spacing but that really does seem pretty loose -- and folks get lost
+pretty easily at the edges.  We're going to put in a C211 membrane to
+help reduce edge losses, but thinking we should try a period 2
+membrane.. [8:
+
+Wed Feb 20 06:36:00 2019 And I want to go Res-controlled instead of
+telomere-controlled.  But do we have any evidence C211 can really
+withstand DReg?
+
+:8]
+
+:6]
+[7:
+
+Wed Feb 20 06:35:13 2019 Also fixed some bad error reporting in
+splattr..  Nice to be able to do that a little..
+
+:7]
+[9:
+
+Thu Feb 21 10:31:51 2019 OK, now into ../code/201902211027-c213/ and
+working on the membrane more.  Sort have IM burning in a pretty
+rickety ring oscillator, and want something more robust.  Also have
+a general "controllable membrane permeability" feature running at a
+cost of 16 bits.[10:
+
+Thu Feb 21 10:35:47 2019 But let's make the permeability less general
+and cut it down to say four bits with a hardcoded permeability table. 
+
+:10]
+
+Planning on ditching telomere controlled guts growth in favor of Res
+contolled, using controlled permeability to turn on and off Res uptake
+to modulate growth.
+
+:9][11:
+
+Thu Feb 21 10:38:04 2019 And what about making a 1D guts?  We do need
+to get back to programmability eventually.
+
+TODO:
+
+ - Permeability table
+
+ - mExport as well?
+
+ - Push DReg away harder
+
+ - Go for a 'standing gradient' on IM instead of a ring burn.
+
+:11]
+[12:
+
+Thu Feb 21 11:02:28 2019 Hmm, on the permeability table, what if we
+didn't store anything, but instead looked for some content on the fly
+to ask if _this_ piece of membrane is open to _this_ possible import
+_right now_?  Push the decision (and any associated storage cost) back
+onto the content rather than pulling it forward to the membrane 'for
+efficiency'.  But could we make a rule that would ever fire?
+
+:12]
+[13:
+
+Fri Feb 22 03:37:24 2019 So we like the just-ask-QContent-on-the-fly
+approach to the import decision.  It's still stigmergic, at least from
+the membrane's point of view, but it's much more flexible than mere
+geometry.
+
+So, now we've moved on to ALIFE19/code/201902220336-grad/, and our
+goal is to ditch the ring burn oscillator for a standing gradient
+stabilizer. [14:
+
+Sat Feb 23 07:13:52 2019 OK we made a gradient stabilizer, buuuut
+given how much the membrane moves around, it's not all that stable
+either.  In particular, it's to keep a single 'gradient anchor' point
+alive as the membrane grows and shrinks.  You can get a relatively
+durable but potentially unbounded _group_ of anchors, or you can have
+a single anchor that gets killed pretty often..
+
+[15:
+
+Sat Feb 23 07:16:01 2019 We're thinking screw the membrane stuff for
+now, and the next stop should be getting the interior goo to have a
+hybrid solid/liquid' nature.  Content in 'solid' mode crystallizes
+into a (bounded) side 2 square, while content in 'liquid' mode moves
+in the odd phase empty spaces among the solid.
+
+:15]
+
+:14]
+
+:13]
+[16:
+
+Sat Feb 23 11:44:32 2019 Moving these notes to ../code/C213/notes/ to
+get into the noo! sekrit! mimburrs ownlee! repo.
+
+:16]
