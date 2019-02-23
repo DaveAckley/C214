@@ -1,0 +1,58 @@
+= element InnerMembrane isa QMembrane
+\symbol IM
+\color #6789ab
+\symmetries all
+local constant Unsigned cREFRACTORY_BITS = 4;
+local typedef Unsigned(cREFRACTORY_BITS) BurnState;
+local constant BurnState cBURNING = BurnState.minof;
+local constant BurnState cBURNABLE = cBURNING+1u;
+local constant BurnState cBURNT = BurnState.maxof;
+local constant Unsigned cAUTO_SPARK_ODDS = 1000u;
+
+== Data members
+u BurnState mBurnState = cBURNT;
+
+== Methods
+getColor {
+. if (mBurnState == cBURNABLE) return cu.color(0x6789abu);
+. if (mBurnState == cBURNING) return cu.color(0xffff00u);
+. Unsigned incr = 10u*(BurnState.maxof-mBurnState);
+. ARGB ret = cu.color((ColorUtils.Byte) (0x80+incr),
+.                    (ColorUtils.Byte) (0x89/2),
+.                    (ColorUtils.Byte) (0xab/2));
+. return ret;
+.}
+
+== Rules (asymmetric spark)
+
+given O isa OuterMembrane
+given N : ! ($curatom is QMembrane)  // Neither inner nor outer
+
+given @ isa InnerMembrane : $self.mBurnState == cBURNABLE
+given I isa InnerMembrane : $self.mBurnState == cBURNABLE
+
+check @ : random.oneIn(cAUTO_SPARK_ODDS)
+
+change @ isa InnerMembrane { $self.mBurnState = cBURNING; }
+change I isa InnerMembrane { $self.mBurnState = cBURNT; }
+
+ OO    ..
+ @I -> @I
+ NN    ..
+
+== Rules (regrow)
+
+given @ isa InnerMembrane : $self.mBurnState > cBURNABLE
+check @ { InnerMembrane & im = (InnerMembrane &) ew[0]; --im.mBurnState; return false; }
+
+   @ -> .
+
+== Rules (burn)
+
+given @ isa InnerMembrane : $self.mBurnState == cBURNING
+vote i isa InnerMembrane  { if ($self.mBurnState == cBURNABLE) $self.mBurnState = cBURNING; return 1u; }
+check @ { InnerMembrane & im = (InnerMembrane &) ew[0]; im.mBurnState = cBURNT; return false; }
+
+   iii    ...
+   i@i -> ...
+   iii    ...

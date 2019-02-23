@@ -1,0 +1,57 @@
+= element ResQX.  Telomere-controlled, Res-based growth regulation
+\symbol RQ
+\color #0f0
+\symmetries all
+
+== Data members
+u typedef Unsigned(3) Generation;
+u Generation mGen = 2;  // Grow for 32 total
+
+== Rules (Growth)
+# This section for immature elements only.  Also in this section, due
+# to the check @ below, we can only have rules that are supposed to
+# age the telomere when they fire
+
+given @ isa ResQX { return $self.mGen < $self.mGen.maxof; }
+given R isa Res
+
+check @ {
+.  ResQX & q = (ResQX &) ew[0];
+.  ++q.mGen;
+.  return true;
+. }
+
+change @ { ew[$cursn] = ew[0]; }
+
+  @R -> @@
+
+== Rules (Youthful mixing)
+# This section for immature elements only.
+given @ isa ResQX { return $self.mGen < $self.mGen.maxof; }
+given Q isa ResQX
+
+ Q@  ->  @Q     # Keep circulating the tapes
+
+  @  ->  @      # Or hold
+
+== Rules (Maturity)
+# Try to complete crystallization
+
+given Q isa ResQX
+
+    Q@X -> .X@    # Here's one way I try to get happy
+
+   Q.@X -> ..X@   # Here's another way
+
+ Q..X@  -> ...@X  # Here's the last way
+
+    QX  -> .@     # This is just weird so change it
+     @      X                                      
+                            
+   Q        Q               
+    X   ->   @    # This too
+     @        X                                    
+
+  Q__@  -> ....   # This is what happy means to me
+
+     @  -> @      # Nothing for me today

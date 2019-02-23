@@ -1,0 +1,84 @@
+= element QX2.  Telomere-controlled, Res-based growth regulation
+\symbol X2
+\color #55f
+\symmetries all
+
+== Data members
+
+u typedef Unsigned(3) Generation;
+u Generation mGen = 2;  // Grow for 32 total
+
+== Rules (Membrane repair)
+# We should never be adjacent to OuterMembrane
+
+vote o isa OuterMembrane
+change i { $curatom = InnerMembrane.instanceof; }
+
+ ooo    ...
+ o@o -> .i.  # Sacrifice self in repair attempt
+ ooo    ...
+
+== Rules (Growth)
+
+# This section for immature elements only.  Also in this section, due
+# to the check @ below, we can only have rules that are supposed to
+# age the telomere when they fire
+
+given @ isa QX2 { return $self.mGen < $self.mGen.maxof; }
+given R isa Res
+
+check @ {
+.  QX2 & q = (QX2 &) ew[0];
+.  ++q.mGen;
+.  return true;
+. }
+
+change @ { ew[$cursn] = ew[0]; }
+
+  @R -> @@
+
+== Rules (Youthful mixing)
+# This section for immature elements only.
+given @ isa QX2 { return $self.mGen < $self.mGen.maxof; }
+given Q isa QX2
+vote I isa InnerMembrane {
+.  AtomUtils au;
+.  $self.mImport = (AtomUtils.Type) au.getType(Res.instanceof);  // Drive by change
+.  return 0u;                   // With no votes so the rule fails overall
+.}
+
+  III    ...
+  I@I -> ...
+  III    ...
+
+ Q@  ->  @Q     # Keep circulating the tapes
+
+  @  ->  @      # Or hold
+
+== Rules (Maturity)
+# Try to complete crystallization
+
+given Q isa QX2
+given N : ! ($curatom is QX2)
+given X : ! ($curatom is QMembrane)
+
+    Q@X -> .X@    # A bit too close, back off
+
+  Q.X@.NN -> ..@X...  # Too far, not losing anybody
+
+    QX  -> .@     # This is just weird so change it
+     @      X
+     .      .
+     N      .
+     N      .
+
+
+   Q.X     ..@
+     @  ->   X    # This too
+     .       .
+     N       .
+     N       .
+
+   Q_@  ->  ...   # This is what happy means to me
+
+     @  -> @      # Nothing for me today
