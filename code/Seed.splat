@@ -4,10 +4,13 @@
 == Rules: Germination
 change o isa OuterMembrane
 change i isa InnerMembrane
-change c isa QX2
+change c isa HardCyt
 
    _____      ooooo
    _____      oiiio
    __@__  ->  oicio  
    _____      oiiio
    _____      ooooo
+
+
+# Else die.

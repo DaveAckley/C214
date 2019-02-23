@@ -1,4 +1,4 @@
-{17}  -*- text -*- 
+{19}  -*- text -*- 
 [0:
 
 Wed Feb 20 03:00:03 2019 OK time for an ALIFE19 paper.  The goal is
@@ -144,3 +144,21 @@ Sat Feb 23 11:44:32 2019 Moving these notes to ../code/C213/notes/ to
 get into the noo! sekrit! mimburrs ownlee! repo.
 
 :16]
+[17:
+
+Sat Feb 23 11:57:30 2019 OK.  So let's do solid crystallization first
+and alone.
+
+TODO:
+
+ - Restart QX2 as QCyt.splat, make it a quark
+
+ - Have HardCyt and SoftCyt as subclasses
+
+ - Make HardCyt grow from Res, forming a side 2 square lattice
+
+ - Define HardCyt 'support' as the number of aligned HC neighbors.
+   Have HC decay back to Res if it sees IM..[18: Sat Feb 23 12:09:11
+   2019 Later, later.  Just get started now  :18]
+
+:17]

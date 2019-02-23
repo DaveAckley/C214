@@ -1,6 +1,4 @@
-= element QX2 isa QContent.  Telomere-controlled, Res-based growth regulation
-\symbol X2
-\color #55f
+= quark QCyt isa QContent.  Base class for hard/soft 'cytoplasmic jelly'
 \symmetries all
 
 == Data members
@@ -41,33 +39,33 @@ change i isa InnerMembrane { $self.mGradVal = $self.mGradVal.minof; }
 # to the check @ below, we can only have rules that are supposed to
 # age the telomere when they fire
 
-given @ isa QX2 { return $self.mGen < $self.mGen.maxof; }
+given @ isa QCyt { return $self.mGen < $self.mGen.maxof; }
 given R isa Res
 
 check @ {
-.  QX2 & q = (QX2 &) ew[0];
+.  QCyt & q = (QCyt &) ew[0];
 .  ++q.mGen;
 .  return true;
 . }
 
 change @ { ew[$cursn] = ew[0]; }
 
-  @R -> @@
+  @.R -> @.@
 
 == Rules (Youthful mixing)
 # This section for immature elements only.
-given @ isa QX2 { return $self.mGen < $self.mGen.maxof; }
-given Q isa QX2
+given @ isa QCyt { return $self.mGen < $self.mGen.maxof; }
+given Q isa QCyt
 
- Q@  ->  @Q     # Keep circulating the tapes
+ Q.@  ->  @.Q     # Keep circulating the tapes
 
   @  ->  @      # Or hold
 
 == Rules (Maturity)
 # Try to complete crystallization
 
-given Q isa QX2
-given N : ! ($curatom is QX2)
+given Q isa QCyt
+given N : ! ($curatom is QCyt)
 given X : ! ($curatom is QMembrane)
 
     Q@X -> .X@    # A bit too close, back off

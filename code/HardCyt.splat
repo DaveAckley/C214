@@ -1,0 +1,41 @@
+= element HardCyt isa QCyt
+\symbol HC
+\color #55f
+\symmetries rotations
+
+== Rules (Growth)
+
+given @ isa HardCyt
+
+vote e isa Empty
+vote r isa Res
+
+change @ {
+.   if ($e.$nvotes > 0u && $r.$nvotes > 0u) {
+.     ew[$e.$winsn] = ew[0];
+.     ew[$r.$winsn] = Empty.instanceof;
+.   }
+. }
+
+     e        .
+    rrr      ...
+   er@re -> ..@..
+    rrr      ...
+     e        .
+
+== Rules (Maintenance with prejudice)
+
+given @ isa HardCyt
+vote w isa HardCyt
+vote x isa HardCyt
+change @ {
+.   if ($w.$nvotes > 0u &&  // If an H is misaligned with us
+.       $h.$nvotes > 2u)    // And we have significant support
+.     ew[$w.$winsn] = Res.instanceof;// The weirdo decays
+. }        
+           
+     h        .
+    www      ...
+   hw@wh -> ..@..
+    www      ...
+     h        .
