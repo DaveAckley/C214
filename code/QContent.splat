@@ -4,6 +4,21 @@
 # Note: Not \symmetries all! C2D.dot() messed up on flips!
 \symmetries rotations
 
+== Methods
+u /** Return true if the membrane should import atom right now
+u  * By default always returns false
+u  */
+u virtual Bool shouldImport(Atom atom) {
+u   return false;
+u }
+u
+u /** Return true if the membrane should export atom right now
+u  * By default always returns false
+u  */
+u virtual Bool shouldExport(Atom atom) {
+u   return false;
+u }
+
 == Rule:  Background evaporation
 given n : !(ew[$cursn] is QContent) && !(ew[$cursn] is InnerMembrane)
 

@@ -2,12 +2,12 @@
 \symbol IM
 \color #6789ab
 \symmetries all
-local constant Unsigned cREFRACTORY_BITS = 4;
+local constant Unsigned cREFRACTORY_BITS = 3;
 local typedef Unsigned(cREFRACTORY_BITS) BurnState;
 local constant BurnState cBURNING = BurnState.minof;
 local constant BurnState cBURNABLE = cBURNING+1u;
 local constant BurnState cBURNT = BurnState.maxof;
-local constant Unsigned cAUTO_SPARK_ODDS = 1000u;
+local constant Unsigned cAUTO_SPARK_ODDS = 500u;
 
 == Data members
 u BurnState mBurnState = cBURNT;
@@ -36,9 +36,9 @@ check @ : random.oneIn(cAUTO_SPARK_ODDS)
 change @ isa InnerMembrane { $self.mBurnState = cBURNING; }
 change I isa InnerMembrane { $self.mBurnState = cBURNT; }
 
- OO    ..
- @I -> @I
- NN    ..
+ OOO     ...
+ @II  -> @II
+ NNN     ...
 
 == Rules (regrow)
 
@@ -50,9 +50,17 @@ check @ { InnerMembrane & im = (InnerMembrane &) ew[0]; --im.mBurnState; return 
 == Rules (burn)
 
 given @ isa InnerMembrane : $self.mBurnState == cBURNING
-vote i isa InnerMembrane  { if ($self.mBurnState == cBURNABLE) $self.mBurnState = cBURNING; return 1u; }
-check @ { InnerMembrane & im = (InnerMembrane &) ew[0]; im.mBurnState = cBURNT; return false; }
+vote i isa InnerMembrane  : $self.mBurnState == cBURNABLE
+check @ {
+.  InnerMembrane & im = (InnerMembrane &) ew[0]; im.mBurnState = cBURNT;
+.  if ($i.$nvotes > 0u) {
+.    InnerMembrane & im2 = (InnerMembrane &) ew[$i.$winsn];
+.    im2.mBurnState = cBURNING;
+.  }
+.  return false;
+. }
 
-   iii    ...
+    i      .
    i@i -> ...
-   iii    ...
+    i      .
+
