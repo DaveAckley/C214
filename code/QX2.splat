@@ -28,6 +28,13 @@ change i { $curatom = InnerMembrane.instanceof; }
  o@o -> .i.  # Sacrifice self in repair attempt
  ooo    ...
 
+== Rules (Seed gradient)
+given i isa InnerMembrane : $self.mGradVal == $self.mGradVal.maxof
+check @ : random.oneIn(1000)
+change i isa InnerMembrane { $self.mGradVal = $self.mGradVal.minof; }
+
+ i@ -> i.
+
 == Rules (Growth)
 
 # This section for immature elements only.  Also in this section, due

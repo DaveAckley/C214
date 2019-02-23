@@ -4,7 +4,8 @@
 == Rules: Germination
 change o isa OuterMembrane
 change i isa InnerMembrane
-change c isa Content
+change c isa QX2
+
    _____      ooooo
    _____      oiiio
    __@__  ->  oicio  

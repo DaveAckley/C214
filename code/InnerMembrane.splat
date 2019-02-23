@@ -2,61 +2,58 @@
 \symbol IM
 \color #6789ab
 \symmetries all
-local constant Unsigned cREFRACTORY_BITS = 3;
-local typedef Unsigned(cREFRACTORY_BITS) BurnState;
-local constant BurnState cBURNING = BurnState.minof;
-local constant BurnState cBURNABLE = cBURNING+1u;
-local constant BurnState cBURNT = BurnState.maxof;
-local constant Unsigned cAUTO_SPARK_ODDS = 500u;
+local constant Unsigned cGRADIENT_BITS = 6;
+local typedef Unsigned(cGRADIENT_BITS) GradVal;
+local constant Unsigned cLOWPASS_BITS = 4;
+local typedef Unsigned(cLOWPASS_BITS) LowPass;
 
 == Data members
-u BurnState mBurnState = cBURNT;
+u GradVal mGradVal = GradVal.maxof;
+u LowPass mLocalMax; // LowPass.maxof if my gradient exceeds all my neighbors
 
 == Methods
 getColor {
-. if (mBurnState == cBURNABLE) return cu.color(0x6789abu);
-. if (mBurnState == cBURNING) return cu.color(0xffff00u);
-. Unsigned incr = 10u*(BurnState.maxof-mBurnState);
-. ARGB ret = cu.color((ColorUtils.Byte) (0x80+incr),
+. if (mGradVal == GradVal.maxof) return super.getColor($selector);
+. if (mGradVal == GradVal.minof) return cu.color(0xffff00u);
+. if (mLocalMax == LowPass.maxof) return cu.color(0xccccccu);
+. Unsigned incr = 2u*(GradVal.maxof-mGradVal);
+. ARGB ret = cu.color((ColorUtils.Byte) (0x70+incr),
 .                    (ColorUtils.Byte) (0x89/2),
 .                    (ColorUtils.Byte) (0xab/2));
 . return ret;
 .}
 
-== Rules (asymmetric spark)
+# == Rules (Highlander)
+# given @ isa InnerMembrane : $self.mGradVal == GradVal.minof
+# vote i isa InnerMembrane   {
+# .  if ($self.mGradVal == GradVal.minof) {
+# .    ++$self.mGradVal;
+# .  }
+# .  return 0u;
+# .}
+     
+#   i      .  
+#  i@i -> ...
+#   i      .
 
-given O isa OuterMembrane
-given N : ! ($curatom is QMembrane)  // Neither inner nor outer
-
-given @ isa InnerMembrane : $self.mBurnState == cBURNABLE
-given I isa InnerMembrane : $self.mBurnState == cBURNABLE
-
-check @ : random.oneIn(cAUTO_SPARK_ODDS)
-
-change @ isa InnerMembrane { $self.mBurnState = cBURNING; }
-change I isa InnerMembrane { $self.mBurnState = cBURNT; }
-
- OOO     ...
- @II  -> @II
- NNN     ...
-
-== Rules (regrow)
-
-given @ isa InnerMembrane : $self.mBurnState > cBURNABLE
-check @ { InnerMembrane & im = (InnerMembrane &) ew[0]; --im.mBurnState; return false; }
-
-   @ -> .
-
-== Rules (burn)
-
-given @ isa InnerMembrane : $self.mBurnState == cBURNING
-vote i isa InnerMembrane  : $self.mBurnState == cBURNABLE
+== Rules (settle)
+scratch 0 = GradVal.maxof + 1
+scratch 1 = -1
+given @ isa InnerMembrane : $self.mGradVal != GradVal.minof
+vote i isa InnerMembrane {
+.  if ($self.mGradVal < $0) $0 = $self.mGradVal;
+.  if ($self.mGradVal > $1) $1 = $self.mGradVal;
+.  return 1u;
+. }
 check @ {
-.  InnerMembrane & im = (InnerMembrane &) ew[0]; im.mBurnState = cBURNT;
-.  if ($i.$nvotes > 0u) {
-.    InnerMembrane & im2 = (InnerMembrane &) ew[$i.$winsn];
-.    im2.mBurnState = cBURNING;
-.  }
+.  InnerMembrane & im = (InnerMembrane &) ew[0]; 
+.  Int maxmin = $0 + 1;
+.  if (im.mGradVal >= $1) ++im.mLocalMax;
+.  else im.mLocalMax = LowPass.minof;
+.  if (maxmin < im.mGradVal)
+.    im.mGradVal = (GradVal) maxmin;
+.  else
+.    ++im.mGradVal;
 .  return false;
 . }
 

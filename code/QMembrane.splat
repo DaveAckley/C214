@@ -4,19 +4,12 @@
 
 == Data members
 
-== Rules: OM management (mostly growing)
+== Rules: OM management Part 1 (miscellaneous business)
 given @ isa OuterMembrane
 given i isa InnerMembrane
 given o isa OuterMembrane
 given q isa QMembrane
 given n : !($curatom is InnerMembrane)
-
-given e : true      // Allow dead sites
-vote  e isa Empty   // Count empty sites
-check e : $nvotes*3u>=$nsites*2u
-
-vote  f : ($curatom is QContent) || ($curatom is Res) || ($curatom is QX2) // Count up legit content
-check f : random.oddsOf($nvotes,3)
 
 # Fight DReg
 vote D isa DReg
@@ -68,10 +61,23 @@ check R {
   i@i  ->  .i.   # Turn in (eliminate surrounded outer membrane)
   iii      ...
 
-# Growth rules
+== Rules: OM management Part 2 (mostly growth)
+
+given @ isa OuterMembrane
+given i isa InnerMembrane
+given o isa OuterMembrane
+given q isa QMembrane
+
 given a isa OuterMembrane
 given b isa OuterMembrane
 given c isa InnerMembrane
+
+given e : true      // Allow dead sites
+vote  e isa Empty   // Count empty sites
+check e : $nvotes*3u>=$nsites*2u
+
+vote  f : ($curatom is QContent) || ($curatom is Res) || ($curatom is QX2) // Count up legit content
+check f : random.oddsOf($nvotes,3)
 
  ee_oqff     ..@....
  eeo@iff ->  ...c...     # Run out

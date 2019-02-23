@@ -1,6 +1,6 @@
-SPLATTR:=/data/ackley/PART4/code/D/SPLAT/splattr
+SPLATTR:=/data/ackley/PART4/code/D/SPLAT/blib/script/splattr
 MFZRUN:=/data/ackley/PART4/code/D/MFM/bin/mfzrun
-MFZGEOMETRY:={{2H2}}
+MFZGEOMETRY:={{2H1}}
 MFZARGS:=$(MFZGEOMETRY) --no-std
 DIR:=$(shell pwd)
 DEMO:=$(shell basename "$(DIR)")
