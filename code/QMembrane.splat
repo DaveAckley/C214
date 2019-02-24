@@ -13,12 +13,12 @@ given n : !($curatom is InnerMembrane)
 
 # Fight DReg
 vote D isa DReg
-vote X { 
-.  return ($curatom is DReg             // Swapping this inward doesn't help
-.          || $curatom is QMembrane)    // and moving this could be disruptive
-.       ? 0u                            // So don't consider them 
+vote X {
+.  return ($curatom is DReg             // Swapping DReg inward doesn't help
+.          || $curatom is QMembrane)    // and moving membrane could be disruptive
+.       ? 0u                            // So no votes for them
 .       : (Votes) ew.getCoord($cursn).euclideanSquaredLength(); // Otherwise, the farther the better
-. }
+.}
 
 change D { ew.swap($X.$winsn,$D.$winsn); }
 
@@ -26,27 +26,23 @@ change D { ew.swap($X.$winsn,$D.$winsn); }
    XXD@ -> D...
     XD      ..
 
-# Import
+# Import/export
 vote C isa QContent
-check R {
-.  DebugUtils du;
-.//  du.print("CheckR");
-.//  du.print($C.$nvotes);
-.//  du.print($R.$nvotes);
-.  if ($C.$nvotes == 0u || $R.$nvotes == 0u) return false;
-.//  du.print("CheckR2");
-.//  du.print($C.$winsn);
-.//  du.print($R.$winsn);
-.  QContent & qc = (QContent &) ew[$C.$winsn];
-.//  du.print(qc);
-.//  du.print(ew[$R.$winsn]);
-.  return qc.shouldImport(ew[$R.$winsn]);
-.}
-#change R { ew.swap($R.$winsn,$cursn); }
 
-    C       .
- R@i_ -> _..R
-    C       .
+check m {
+.  if ($C.$nvotes == 0u) return false; // Nobody to ask
+.  Bool m = $m.$winatom is Empty;
+.  Bool x = $x.$winatom is Empty;
+.  if (m && x) return false;           // Nothing to do
+.  QContent & qc = (QContent &) ew[$C.$winsn];
+.  m = m || qc.shouldImport($m.$winatom); // Empty or importable
+.  x = x || qc.shouldExport($x.$winatom); // Empty or exportable
+.  return m && x;
+.}
+
+    CC       ..
+ m@ixC -> x..m.
+    CC       ..
 
 # Self-stabilization rules
 
@@ -76,7 +72,7 @@ given e : true      // Allow dead sites
 vote  e isa Empty   // Count empty sites
 check e : $nvotes*3u>=$nsites*2u
 
-vote  f : ($curatom is QContent) || ($curatom is Res) || ($curatom is QX2) // Count up legit content
+vote  f : ($curatom is QContent) || ($curatom is Res)   // Count up legit content
 check f : random.oddsOf($nvotes,3)
 
  ee_oqff     ..@....
@@ -125,19 +121,6 @@ let x = i|o
   x@x  ->  .o.      # Shrink tail
   xxx      ...
 
-== Rules: Export
-given o isa OuterMembrane
-
-vote C isa QContent
-check R {
-.  if ($C.$nvotes == 0u || $R.$nvotes == 0u) return false;
-.  QContent & qc = (QContent &) ew[$C.$winsn];
-.  return qc.shouldExport(ew[$R.$winsn]);
-.}
-
-    C       .
- _@oR -> R.._
-    C       .
 
 == Rules: IM management (shrink and die)
 given @ isa InnerMembrane
