@@ -6,7 +6,7 @@ DIR:=$(shell pwd)
 DEMO:=$(shell basename "$(DIR)")
 TIMESTAMP:=$(shell date +%Y%m%d-%H%M%S)
 DEV:=$(shell whoami)
-ISHNAME:=$(TIMESTAMP)-$(DEV)
+ISHNAME:=ISH-$(TIMESTAMP)-$(DEV)
 THIS_DIR:=$(strip $(notdir $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))))
 
 $(DEMO).mfz:	*.splat Makefile* 

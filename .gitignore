@@ -5,3 +5,6 @@
 .splatgen
 .gen
 
+# Ignore ishtar related stuff
+ISH-BUILD-*.txt
+ISH-*.tgz
