@@ -1,4 +1,4 @@
-{23}  -*- text -*- 
+{33}  -*- text -*-
 [0:
 
 Wed Feb 20 03:00:03 2019 OK time for an ALIFE19 paper.  The goal is
@@ -14,7 +14,7 @@ some kind of more structured reproduction than we saw in the 2018
 
 (3) put them all in some C211-like bag (like 2018), for some good
     reason -- perhaps using the membrne to sense the environment and
-    determine when conditions are plausible 
+    determine when conditions are plausible
 
 (4) to perform a reproduction by having each guy in the crystal twin
     and then pull apart.
@@ -73,7 +73,7 @@ a general "controllable membrane permeability" feature running at a
 cost of 16 bits.[10:
 
 Thu Feb 21 10:35:47 2019 But let's make the permeability less general
-and cut it down to say four bits with a hardcoded permeability table. 
+and cut it down to say four bits with a hardcoded permeability table.
 
 :10]
 
@@ -167,13 +167,119 @@ Sat Feb 23 14:22:58 2019 OK, so we're building a H matrix now.
 
 TODO:
 
- - Make NSEW distance estimators, measured in terms of H matrix
+[23: Sat Feb 23 16:48:54 2019
+DONE for HardCyt, but WNSE == sitenum-1 :23] - Make NSEW distance estimators, measured in terms of H matrix
    cells.
 
- - Have H settle towards size/position info in terms of distance
+[24: Sat Feb 23 16:48:59 2019
+DONE :24] - Have H settle towards size/position info in terms of distance
    estimators
 
- - Stop importing Res once estimators exceed some threshold
-
+[25: Sun Feb 24 03:50:12 2019
+DONE :25] - Stop importing Res once estimators exceed some threshold
 
 :22]
+[26:
+
+Sun Feb 24 03:50:22 2019 OK so the distance estimators are workingish,
+although (surprise) using them to limit cell growth has some
+unexpected consequences.  Since they measure distance-from-IM, if we
+can neck down the membrane in the middle, the cell can grow
+in sort of a figure-8 shape and basically double its volume..
+
+Just like if it was reproducing...
+
+:26][27:
+
+Sun Feb 24 03:54:43 2019 So more
+
+TODO:
+
+[30: Sun Feb 24 05:57:57 2019
+DONE :30] - Extend distance estimator to do not just 1+nghb in the 'axis'
+   direction but also max(nghb) in the 'orthogonal' direction.
+   Worried that will lead to 'ghost distances' but we need to try
+   coupling across rows/columns somehow.
+
+[32: Sun Feb 24 08:12:05 2019 Can even export DReg and import Res in one event!
+DONE :32] - Export DReg.  Despite everything it managed to get into the cells
+   on the evening/night long-run test.
+
+ - Review/debug QMembrane rules.  We observed crosses and chipped caps
+   in the long run.  We're not sure if we broke something that used to
+   prevent/fix them, or if (we suspect) DReg is implicated in their
+   formation, but either way nothing seemed to degrade or repair them.
+
+            IO                   OO
+    Cross:  OI    Chipped cap:   OIO
+
+    We'd like chipped caps to fill:  oO_ -> ..O
+    with o isa OM and O isa OM.      oIO    ...
+
+                                      ___     ...
+    At least, if there's nothing     oO__ -> ..O.
+    confounding, perhaps like:       oIO_    ....
+
+    Really not clear what to do about crosses but let's take another
+    look.
+
+
+ - Also saw stable edge-of-universe stubs we'd like to get rid of:
+
+               ddd
+    Edge stub: OIO   # d
+
+ - (Probably,) Ditch HardCyt & SoftCyt as types in favor of just QCyt
+   with a Bool mIsHard.  We're going to want to melt and freeze QCyt
+   without losing all their state.
+
+:27]
+[28:
+
+Sun Feb 24 04:53:42 2019 So we had restricted ourselves to
+'\symmetries rotations' to keep our sanity, but combining that with
+our getWestIndex and getNorthIndex concepts actually meant our 'max in
+the orthogonal direction' implementation missed cases where a flip is
+required to make 'north' be counter-clockwise to west.
+
+So we just finishing rebuilding with '\symmetries all' and we're
+predicting it will work better.[29:
+
+Sun Feb 24 05:03:46 2019 Playing with that (it's working as we
+expected) and just noticed that two away from a HardCyt it might be an
+OM, and we better accept that as a basis for 0 distance to membrane!
+
+:29]
+
+:28]
+[31:
+
+Sun Feb 24 05:58:12 2019 So, the 1+axis, max(ortho) concept seems to
+work pretty well and with some interesting properties.
+
+ - Yes, there can be conflicts between trusting your neighbors
+   estimates vs your own observations.  With one symmetry you may see,
+   say membrane to the west, and so set your west distance, while with
+   another symmetry you end up maxing with your north neighbor's west
+   and get a non-zero score.
+   
+ - And those conflicts absolutely do cause instabilities in distance
+   estimates, whenever a given HC is on a row or column that is not,
+   in fact, the max width or height.
+
+ - But we do _not_ see 'ghost' or zombie distances persisting
+   indefinitely, so long as the main connectivity of the grid is
+   intact.  To the contrary estimates quite quickly to only vary
+   between plausible values given the current membrane shape.
+
+ - (Now, if a DReg gets in and starts punching holes, that can
+   eliminate some estimate propagation channels and leave bad
+   estimates hanging in some cells.  But we're talking dementia by
+   then in any case.)
+
+ - And for the folk, if any, that are on a max width row and a max
+   height column, their distance estimates are rock solid -- and such
+   folk tend to be toward the middle of the cell, and thus plausible
+   candidates for elevating to some more privileged status.
+
+:31]
