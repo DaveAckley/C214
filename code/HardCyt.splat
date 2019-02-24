@@ -1,51 +1,66 @@
 = element HardCyt isa QCyt
 \symbol HC
 \color #55f
-\symmetries rotations
+\symmetries all
 local constant Unsigned cDISTANCE_BITS = 4u;
 local typedef Unsigned(cDISTANCE_BITS) Distance;
 local typedef EventWindow.SiteNum SiteNum;
+local constant Unsigned cCELL_TARGET_DIAMETER = 6u;
 
 == Data members
 u Distance mDistances[4];  // WNSE
 
 == Methods
-u Unsigned getWestIndex() {
+u Bool shouldImport(Atom atom) {
+.   return
+.       atom is Res
+.    && (1u + mDistances[0] + mDistances[3]) < cCELL_TARGET_DIAMETER // us+W+E
+.    && (1u + mDistances[1] + mDistances[2]) < cCELL_TARGET_DIAMETER // us+N+S
+.   ;
+. }
+
+u Bool shouldExport(Atom atom) {
+.   return
+.       atom is DReg
+.   ;
+. }
+
+u Unsigned getNgbDirIndex(C2D ngb) {
 .    EventWindow ew;
-.    C2D c(-1,0);
-.    SiteNum sn = ew.getSiteNumber(c);
+.    SiteNum sn = ew.getSiteNumber(ngb);
 .    return sn-1u;
+. }
+
+u Unsigned getWestIndex() { 
+.    C2D c(-1,0);
+.    return getNgbDirIndex(c);
+. }
+
+u Unsigned getNorthIndex() {
+.    C2D c(0,-1);
+.    return getNgbDirIndex(c);
 . }
 
 == Rules (Update distance estimates)
 
 given @ isa HardCyt
-given i isa InnerMembrane
+given q isa QMembrane
 given h isa HardCyt
-let x = i|h
+let x = q|h
 check @ {
-.   DebugUtils du;
-.   du.print("CH@");
 .   HardCyt & h = (HardCyt&) ew[0];
 .   Unsigned westIdx = h.getWestIndex();
-.   if ($i.$nvotes > 0u) h.mDistances[westIdx] = 0u;
-.   else if ($h.$nvotes > 0u) {
-.     du.print("HNV");
-.     SiteNum sn = (SiteNum) $h.$winsn;
-.     du.print(sn);
-.     HardCyt & h2 = (HardCyt&) ew[sn];
-.     du.print(h);
-.     du.print(h2);
-.     du.print(h.mDistances[westIdx]);
-.     du.print(h2.mDistances[westIdx]);
-.     Distance incr = (Distance) (h2.mDistances[westIdx]+1u);
-.     du.print("INC");
-.     du.print(incr);
-.     h.mDistances[westIdx] = incr;
-.     du.print(h.mDistances[westIdx]);
-.     du.print(h2.mDistances[westIdx]);
-.     du.print(h);
-.     du.print(h2);
+.   if ($q.$nvotes > 0u) h.mDistances[westIdx] = 0u; // Believen my lyin' eyes
+.   else if ($h.$nvotes > 0u) {                      // Believen whachu tell me
+.     HardCyt & h2 = (HardCyt&) ew[$h.$winsn];
+.
+.     // Increment in axis direction
+.     h.mDistances[westIdx] = (Distance) (h2.mDistances[westIdx]+1u);
+.
+.     // Max in orthogonal direction
+.     Unsigned northIdx = h.getNorthIndex();
+.     if (h2.mDistances[northIdx] > h.mDistances[northIdx])
+.       h.mDistances[northIdx] = h2.mDistances[northIdx];
 .   }
 .   return false;  
 . }
