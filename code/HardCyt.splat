@@ -11,11 +11,19 @@ local constant Unsigned cCELL_TARGET_DIAMETER = 6u;
 u Distance mDistances[4];  // WNSE
 
 == Methods
+u Unsigned getWidthEstimate() {
+.   return (1u + mDistances[0] + mDistances[3]); // us+W+E
+. }
+
+u Unsigned getHeightEstimate() {
+.   return (1u + mDistances[1] + mDistances[2]); // us+N+S
+. }
+
 u Bool shouldImport(Atom atom) {
 .   return
 .       atom is Res
-.    && (1u + mDistances[0] + mDistances[3]) < cCELL_TARGET_DIAMETER // us+W+E
-.    && (1u + mDistances[1] + mDistances[2]) < cCELL_TARGET_DIAMETER // us+N+S
+.    && getWidthEstimate() < cCELL_TARGET_DIAMETER
+.    && getHeightEstimate() < cCELL_TARGET_DIAMETER // us+N+S
 .   ;
 . }
 
@@ -41,7 +49,17 @@ u Unsigned getNorthIndex() {
 .    return getNgbDirIndex(c);
 . }
 
-== Rules (Update distance estimates)
+
+== Rules (Fatal conditions)
+given @ isa HardCyt :
+.  !$self.mDie &&                                 // Not already dying, and 
+.  ($self.getWidthEstimate() >= Distance.maxof || // somehow 
+.   $self.getHeightEstimate() >= Distance.maxof)  // oversized
+change @ isa QCyt { $self.mDie = true; }
+
+  @ -> @
+
+== Postrules (Update distance estimates)
 
 given @ isa HardCyt
 given q isa QMembrane
@@ -68,8 +86,7 @@ check @ {
  x.@ -> ...
 
 
-
-== Rules (Growth)
+== Postrules (Growth)
 
 given @ isa HardCyt
 
@@ -90,11 +107,11 @@ change @ {
      e        .
 
 
-== Rules (Maintenance with prejudice)
+== Postrules (Maintenance with prejudice)
 
 given @ isa HardCyt
 vote w isa HardCyt
-vote x isa HardCyt
+vote h isa HardCyt
 change @ {
 .   if ($w.$nvotes > 0u &&  // If an H is misaligned with us
 .       $h.$nvotes > 2u)    // And we have significant support
@@ -106,3 +123,6 @@ change @ {
    hw@wh -> ..@..
     www      ...
      h        .
+
+
+     @  -> @      # Else hold

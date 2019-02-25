@@ -49,6 +49,9 @@ check m {
   i_       .@
   i@   ->  ..    # Square off (complete outer membrane)
 
+  _i       i.
+  i@   ->  ..    # Square corner (complete inner membrane)
+
   nnn      ...
   n@n  ->  ._.   # Die off (eliminate isolated outer membrane)
   nnn      ...
@@ -145,23 +148,26 @@ check f : random.oddsOf(3u*$nvotes+1u,10u)
 # Self-stabilization rules
 
   ___      ...
-  o@o  ->  .o.      # Cap off
+  c@c  ->  .c.      # Cap off
   oxo      ...
 
   o_       .@
-  o@   ->  ..       # Square in
+  o@   ->  ..       # Square in (complete inner membrane)
+
+  _o       o.
+  o@   ->  ..       # Square corner (complete outer membrane)
 
   nnn      ...
   n@n  ->  ._.      # Die in
   nnn      ...
 
  _____     .....
- __oo_     .o...
-  o@o  ->   ...     # Put your cap on
+ __co_     .c...
+  c@o  ->   ...     # Put your cap on
 
-  ooo      ...
-  o@o  ->  .o.      # Turn out
-  ooo      ...
+  oco      ...
+  c@c  ->  .c.      # Turn out
+  oco      ...
 
 given z : !ew.isLive($cursn)
 

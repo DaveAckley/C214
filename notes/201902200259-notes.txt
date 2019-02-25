@@ -1,4 +1,4 @@
-{33}  -*- text -*-
+{47}  -*- text -*-
 [0:
 
 Wed Feb 20 03:00:03 2019 OK time for an ALIFE19 paper.  The goal is
@@ -262,7 +262,7 @@ work pretty well and with some interesting properties.
    say membrane to the west, and so set your west distance, while with
    another symmetry you end up maxing with your north neighbor's west
    and get a non-zero score.
-   
+
  - And those conflicts absolutely do cause instabilities in distance
    estimates, whenever a given HC is on a row or column that is not,
    in fact, the max width or height.
@@ -283,3 +283,144 @@ work pretty well and with some interesting properties.
    candidates for elevating to some more privileged status.
 
 :31]
+[33:
+
+Sun Feb 24 09:48:01 2019 OK, so, doing a longer run we still see DReg
+managing to raise havoc, sufficiently to disrupt the membrane an let
+the cyt out which then plasters the universe (along with rogue
+membrane biofilms).
+
+So it's time to implement the ripcord for these guys, giving them a
+collective identity tag and the ability to trigger apoptosis if things
+go too far wrong.  We're going to have membrane just vanish while Cyt
+will decay back to Res even though those are pretty inconsistent
+stories relative to conservation of 'matter'.  (But, we're going to
+say that such 'conservation laws' are design choices, not givens, in a
+hosted physics.)
+
+(We also still need to fix at least the chipped caps, because they're
+still happening and they seem fixable.)
+
+:33]
+[34:
+
+Sun Feb 24 09:56:27 2019 Buut what if we _don't_ have an identity tag?
+What if we go on spatial grounds?  Triggered Cyt destroys all the Cyt
+it can see; if that stretches into (what had been) another cell well
+too bad for that other cell -- it shouldn't have gotten so close.
+
+We'll need to deal with membrane decay separately, but we can think of
+conditions for Cyt to punch out:
+
+ (1) Cyt immediately adjacent to OM
+
+ (2) Any Cyt mDistances reaches Distance.maxof
+
+[35:
+
+Sun Feb 24 10:00:52 2019 Let's see how far we can get on clean dying
+without QID.splat..
+[36:
+
+Sun Feb 24 10:02:21 2019 Well, for that, some
+
+TODO:
+
+[37: Sun Feb 24 10:53:35 2019
+DONE :37] - Rip the vestiges of telomere out of QCyt
+
+[38: Sun Feb 24 10:53:40 2019
+DONE :38] - Add a QCyt.mDie Bool propagating at max velocity
+
+[39: Sun Feb 24 10:53:55 2019
+DONE :39] - Get cases :34: 1-2 going
+
+:36]
+:35]
+
+:34]
+[40:
+
+Sun Feb 24 10:54:08 2019 OK, so now we need QMembrane death, because
+on oversize death we have residual Res that keeps the membrane from
+collapsing all the way.
+
+..but wait, we don't have enough residual Res, our HardCyt is not
+decaying properly; why not?
+
+:40]
+[41:
+
+Mon Feb 25 03:51:23 2019 OK so we have both HardCyt and QMembrane
+decaying in reasonably plausible ways.  Still need to deal with
+chipped caps; let's go for that.[42:
+
+Mon Feb 25 03:53:35 2019 OK, so, why doesn't 'Put your cap on' already
+deal with this?  In a 'given @ isa InnerMembrane' ruleset, we have
+this:
+
+ _____     .....
+ __oo_     .o...
+  o@o  ->   ...     # Put your cap on
+
+Ah I guess it's because of the _ at LHS (4,1)?
+
+..Wait, I guess the issue really isn't as specific as a chipped cap like
+
+  _oo
+  o@o
+
+it's more like a 'dinged corner'
+
+  _o     oo
+  o@ ->  o@
+
+except isn't that an awful small pattern to deploy comfortably?
+How could that rule really be safe?
+
+        oo.oo
+  _oo   oo_oi
+  oio   iioii
+  oi     ioi
+
+[43:
+
+Mon Feb 25 04:09:31 2019 Well, trying it
+
+  _o     o.
+  o@ ->  ..
+
+Does that mean we want to try 
+
+  _i     i.
+  i@ ->  ..
+
+in the OM stabilization section?
+[44:
+
+Mon Feb 25 04:11:02 2019 Well, trying both.. But They Can't Be Right
+They Are Too General![45:
+
+Mon Feb 25 04:44:31 2019 Well, they might be Too General but so far
+they seem to be fitting in with no ill effects..  Hard to believe we
+didn't have them before.  Perhaps they used to be covered by something
+we changed recently.
+
+:45] 
+
+:44]
+
+:43]
+:42]
+
+:41]
+[46:
+
+Mon Feb 25 08:54:16 2019 OK well I guess we can claim clean dying at
+this point.  We'd like to defend against DReg a little better than we
+are so far -- cells seem to be dying within a few or several hours of
+runtime -- but we'll revisit that later.  Thinking about a OM-mediated
+fringe of external sensors/protectors that might push out the
+controlled radius.
+
+:46]

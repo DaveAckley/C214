@@ -6,13 +6,17 @@ local constant Unsigned cGRADIENT_BITS = 6;
 local typedef Unsigned(cGRADIENT_BITS) GradVal;
 local constant Unsigned cLOWPASS_BITS = 4;
 local typedef Unsigned(cLOWPASS_BITS) LowPass;
+local typedef XTimer(3,Unsigned(3).maxof,10u) LonelyTimer;
 
 == Data members
 u GradVal mGradVal = GradVal.maxof;
 u LowPass mLocalMax; // LowPass.maxof if my gradient exceeds all my neighbors
+u Bool mDie = false;
+u LonelyTimer mTimer;
 
 == Methods
 getColor {
+. if (mDie) return cu.color(0xffffffu); // White for death
 . if (mGradVal == GradVal.maxof) return super.getColor($selector);
 . if (mGradVal == GradVal.minof) return cu.color(0xffff00u);
 . if (mLocalMax == LowPass.maxof) return cu.color(0xccccccu);
@@ -23,18 +27,39 @@ getColor {
 . return ret;
 .}
 
-# == Rules (Highlander)
-# given @ isa InnerMembrane : $self.mGradVal == GradVal.minof
-# vote i isa InnerMembrane   {
-# .  if ($self.mGradVal == GradVal.minof) {
-# .    ++$self.mGradVal;
-# .  }
-# .  return 0u;
-# .}
-     
-#   i      .  
-#  i@i -> ...
-#   i      .
+== Prerules (Death)
+given @ isa InnerMembrane : $self.mDie
+given i : true
+vote i isa InnerMembrane : $self.mDie = true
+check i : true
+
+   iii    ...
+   i@i -> ._.
+   iii    ...
+
+
+== Prerules (Manage timer)
+given @ isa InnerMembrane
+vote i isa InnerMembrane
+vote q isa QContent
+let c = q|i
+check @ {
+.  InnerMembrane & im = (InnerMembrane&) ew[0];
+.  if ($q.$nvotes > 0u) { im.mTimer.reset(); return false; }
+.  if ($i.$nvotes > 0u) {
+.    InnerMembrane & im2 = (InnerMembrane&) ew[$i.$winsn];
+.    LonelyTimer.Counter ctr = im2.mTimer.current();
+.    if (ctr < im.mTimer.current()) im.mTimer.set(ctr);
+.  }
+.  if (im.mTimer.countAlarm()) { im.mDie = true; return true; }
+.  return false;
+. }
+
+   c        .
+  ccc      ...
+ cc@cc -> .....
+  ccc      ...
+   c        .
 
 == Rules (settle)
 scratch 0 = GradVal.maxof + 1
@@ -46,7 +71,7 @@ vote i isa InnerMembrane {
 .  return 1u;
 . }
 check @ {
-.  InnerMembrane & im = (InnerMembrane &) ew[0]; 
+.  InnerMembrane & im = (InnerMembrane &) ew[0];
 .  Int maxmin = $0 + 1;
 .  if (im.mGradVal >= $1) ++im.mLocalMax;
 .  else im.mLocalMax = LowPass.minof;
@@ -60,4 +85,3 @@ check @ {
     i      .
    i@i -> ...
     i      .
-

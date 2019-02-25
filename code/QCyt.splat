@@ -3,28 +3,40 @@
 
 == Data members
 
-u typedef Unsigned(3) Generation;
-u Generation mGen = 2;  // Grow for 32 total
+u Bool mDie = false;
 
 == Methods
-u Bool shouldImport(Atom atom) {
-.   DebugUtils du;
-.   Bool ret = (mGen < mGen.maxof) && atom is Res;
-.//   du.print("shouldImport");
-.//   du.print(atom);
-.//   du.print(ret);
-.   return ret;
-. }
 
-== Rules (Membrane repair)
+== Prerules (Death propagation)
+given @ isa QCyt : $self.mDie
+
+given q : true                       // Non-existent sites match too
+vote q isa QCyt : $self.mDie = true  // Drive-by spreading the bad news
+check q : true                       // But we're decaying in any case
+
+change R isa Res
+ 
+     q             .
+    qqq           ...
+   qqqqq         .....
+  qqqqqqq       .......
+ qqqq@qqqq ->  ....R....
+  qqqqqqq       .......
+   qqqqq         .....
+    qqq           ...
+     q             .
+
+
+== Rules (Fatal conditions)
+
 # We should never be adjacent to OuterMembrane
-
 vote o isa OuterMembrane
-change i { $curatom = InnerMembrane.instanceof; }
+change @ isa QCyt { $self.mDie = true; }
 
  ooo    ...
- o@o -> .i.  # Sacrifice self in repair attempt
+ o@o -> .@.
  ooo    ...
+
 
 == Rules (Seed gradient)
 given i isa InnerMembrane : $self.mGradVal == $self.mGradVal.maxof
@@ -35,56 +47,33 @@ change i isa InnerMembrane { $self.mGradVal = $self.mGradVal.minof; }
 
 == Rules (Growth)
 
-# This section for immature elements only.  Also in this section, due
-# to the check @ below, we can only have rules that are supposed to
-# age the telomere when they fire
-
-given @ isa QCyt { return $self.mGen < $self.mGen.maxof; }
+given @ isa QCyt
 given R isa Res
-
-check @ {
-.  QCyt & q = (QCyt &) ew[0];
-.  ++q.mGen;
-.  return true;
-. }
-
-change @ { ew[$cursn] = ew[0]; }
 
   @.R -> @.@
 
-== Rules (Youthful mixing)
-# This section for immature elements only.
-given @ isa QCyt { return $self.mGen < $self.mGen.maxof; }
-given Q isa QCyt
+# == Rules (Maturity)
+# # Try to complete crystallization
 
-# Q.@  ->  @.Q     # Keep circulating the tapes
+# given Q isa QCyt
+# given N : ! ($curatom is QCyt)
+# given X : ! ($curatom is QMembrane)
 
-  @  ->  @      # Or hold
+#     Q@X -> .X@    # A bit too close, back off
 
-== Rules (Maturity)
-# Try to complete crystallization
+#   Q.X@.NN -> ..@X...  # Too far, not losing anybody
 
-given Q isa QCyt
-given N : ! ($curatom is QCyt)
-given X : ! ($curatom is QMembrane)
-
-    Q@X -> .X@    # A bit too close, back off
-
-  Q.X@.NN -> ..@X...  # Too far, not losing anybody
-
-    QX  -> .@     # This is just weird so change it
-     @      X
-     .      .
-     N      .
-     N      .
+#     QX  -> .@     # This is just weird so change it
+#      @      X
+#      .      .
+#      N      .
+#      N      .
 
 
-   Q.X     ..@
-     @  ->   X    # This too
-     .       .
-     N       .
-     N       .
+#    Q.X     ..@
+#      @  ->   X    # This too
+#      .       .
+#      N       .
+#      N       .
 
-   Q_@  ->  ...   # This is what happy means to me
-
-     @  -> @      # Nothing for me today
+#    Q_@  ->  ...   # This is what happy means to me
