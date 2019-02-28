@@ -1,0 +1,66 @@
+= quark SwapLine
+
+== Methods
+u virtual Bool isAnchor(Atom a) { return false; }
+
+== Rules
+
+given @ isa SwapLine
+vote s isa SwapLine
+
+# Back man blocks advance
+  s     .
+   @ ->  .
+  s     .
+
+# Soak into forward anchor or swapline
+vote m {
+.  if ($curatom is SwapLine) return 1u;
+.  SwapLine & me = (SwapLine&) ew[0];
+.  return me.isAnchor($curatom) ? 1u : 0u;
+. }
+
+  @m -> _.
+
+# Advance if caught up
+vote n {  // grr same as m why can't I say 'let n = m' at least?
+.  if ($curatom is SwapLine) return 1u;
+.  SwapLine & me = (SwapLine&) ew[0];
+.  return me.isAnchor($curatom) ? 1u : 0u;
+. }
+
+   mm    ..
+   @x -> x@
+   nn    ..
+
+# Plate around backward anchor
+vote a {
+.  SwapLine & me = (SwapLine&) ew[0];
+.  return me.isAnchor($curatom) ? 1u : 0u;
+. }
+given M {
+.  SwapLine & me = (SwapLine&) ew[0];
+.  return !(me.isAnchor($curatom) || $curatom is SwapLine);
+. }
+
+   a_M     .@.
+    @   ->  .
+
+    @   ->  .
+   a_M     .@.
+
+# Plate under HardCyt
+vote H isa HardCyt
+
+   _HM    H@.
+    @  ->  .
+
+    @  ->  .
+   _HM    H@.
+
+== Rule (mostly wait)
+
+given @ isa SwapLine
+check @ : random.oddsOf(99,100)
+
+   @ -> .

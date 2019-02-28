@@ -1,4 +1,4 @@
-{47}  -*- text -*-
+{64}  -*- text -*-
 [0:
 
 Wed Feb 20 03:00:03 2019 OK time for an ALIFE19 paper.  The goal is
@@ -390,7 +390,7 @@ Mon Feb 25 04:09:31 2019 Well, trying it
   _o     o.
   o@ ->  ..
 
-Does that mean we want to try 
+Does that mean we want to try
 
   _i     i.
   i@ ->  ..
@@ -406,7 +406,7 @@ they seem to be fitting in with no ill effects..  Hard to believe we
 didn't have them before.  Perhaps they used to be covered by something
 we changed recently.
 
-:45] 
+:45]
 
 :44]
 
@@ -423,4 +423,321 @@ runtime -- but we'll revisit that later.  Thinking about a OM-mediated
 fringe of external sensors/protectors that might push out the
 controlled radius.
 
-:46]
+:46][47:
+
+Mon Feb 25 09:17:33 2019 So.  SoftCyt?  How do we go at it.  I confess
+I'd rather keep HC and SC as separate types[48:
+
+Mon Feb 25 10:02:14 2019 OK let's keep them separate.  How do we
+transfer base class QCyt state from an instance of one to a newly
+created instance of the other.  What's our situation on constructors
+in ulam these days?[49: Tue Feb 26 15:04:06 2019 Done using Self(..)?
+
+Ooh, the uAARM (ulam Appendix A Reference Manual) says I can put
+arguments after an instanceof operator.  That should give me a base
+class transfer route, yes no yes?
+
+[50:
+
+Tue Feb 26 15:10:07 2019 Could we also offer $Self as a SPLAT
+mechanism to provide the 'top-level' Self to all rule sets?  It would
+expand to the actual class name, rather than to (ulam-level) 'Self',
+so it would get around the 'rule sets are different classes' issue.
+
+:50]
+
+:49]
+
+:48]
+
+:47]
+[51:
+
+Wed Feb 27 05:55:09 2019 Finally got a full-on sleep.  So to transfer
+state HardCyt<->SoftCyt, can't we just do broadside parallel
+assignment of the base class type?
+
+  Base A, data member a1, a2
+  Sub B isa A, data member b1
+  Sub C isa A, data member c1
+
+  B b; b.a1 = 9; b.a2 = 10; b.b1 = 11;
+  C c; c.c1 = 11; // c.a1 == 0; c.a2 == 0;
+  ((A&) c) = (A&) b;
+  // now c.a1 == 9; c.a2 == 10; c.c1 == 11; right?
+
+[52:
+
+Wed Feb 27 06:06:52 2019 Well it's saying
+
+  B initFrom(A& suba) {
+    B b;
+    ((A&) b) = suba;
+      ^
+./Base.ulam:9:7: ERROR: Explicit Reference casts (Type&) are valid for reference variable initialization (including function call arguments); not in this context.
+
+[53:
+
+Wed Feb 27 06:26:59 2019 Buuut this works..
+
+  Unsigned(4) c1 = 9;
+  B initFrom(Base& base) {
+    B b;
+    Base& r = (Base&) b;
+    r = base;
+    return b;
+  }
+
+so yes, we can do parallel assignment to all the base class state via
+a reference-to-base
+
+:53]
+
+:52]
+
+:51]
+[54:
+
+Wed Feb 27 06:40:03 2019 OK so we have 'SoftCyt soften() {..}' in
+HardCyt and 'HardCyt harden() {..}' in SoftCyt, as yet untested but
+plausible.  We need some QCyt state to be passed around and I'm
+thinking let's toss together some little tag-value thing and have a
+few of those at QCyt level.  Hard and soft might have other tags of
+their own but we need to strike at a cell-wide associative pool of
+knowledge real soon now, so...
+
+8 bit tag-val?  3 tag + 5 val?  Parametrize it of course but..  Well
+let's just start QTag?  Where's the value?  QTuple?  That's any
+arity.  QAttr?  QProperty?
+
+Well, what operations do we want our collective pool of t-vs to have?
+Read and write?  That's pretty high level.  How about 'amplify' and
+'attenuate'.  Then search.
+
+We'd like to store a not-huge set of tag-values robustly in a
+distributed, shifting pool of tag-value 'slots', and get nice
+properties from the collection like:
+
+ - Blocking reads: Can post a request for the value of a tag and then
+   'suspend the thread' until that comes back.
+
+So we're building a threaded machine on top of these TVs?
+
+Perhaps it's time to actually go programmable and say these TVs can
+read other TVs and request and control stuff?  Is there a
+minimal-minimal way to think about that to get started?  After all we
+don't even have cell mobility actually implemented yet.
+
+ - Votes and quorum calls.  Make a collective decision based on how
+   much support there is for something.
+
+[55:
+
+Wed Feb 27 07:08:54 2019 I think we need to NOT go full-on tag value
+in the sense of expecting tag semantics to be immutable across the
+entire collective.  We WANT to continue to use spatial locality to
+resolve aliased/ambiguous tag meanings locally.
+
+For example, suppose we used UMod tags to create a 1D sequence of
+TVs within the HCs.  Anybody in the event window can have the next tag
+in the sequence, but the sequence itself can stretch beyond the
+event window and the tags (of course) repeat with the period of the
+UMod.
+
+So like if we put just two TVs per HC, then we could see up to 10 TVs
+in an event window, so a UMod(4) tag would have slack beyond..
+[56:
+
+Wed Feb 27 07:25:21 2019 Simplify.  How about just a linear chain of
+HCs, with a next and prev ptr based on direction?  Perhaps SCs could
+chain based on tag identity, and that way we could freeze and melt a
+1D QCyt sequence by mapping back and forth between location-based (HC
+positions) and content-based (SC tags) chaining.  We'd also need
+HC<->SC interface mechanisms at the melting and freezing sequence
+ends, that would have one location-based pointer and one tag-based
+pointer.
+
+SC would have to not stray beyond the ..if anybody ..
+
+So we're reinventing bonds here, step by step.  Not that reinvention
+is a bad thing, oh no no.  But we should be aware of the bond
+attractor as we consider our moves here.
+
+[57:
+
+Wed Feb 27 07:35:19 2019 So we can build a 1D HC chain using history.
+The seed creates a "5'" HC end (though we won't call it that) and
+subsequent HC creations (always performed by an existing HC) add on at
+the "3'" end.  But, just like in the 2D printer, that creates a tree,
+not a chain, unless we limit the 3' creations to just the loose end.
+And if we do make that limit, we can paint our chain into a corner.
+
+So is there anything helpful to do with a very straggly tree?  We
+could treat it as a chain in the upward direction..
+
+Well at least it avoids leader elections.  If we imbue the root of the
+tree with decision authority and have some Plan B mechanism if the
+root gets killed.
+
+Well, let's put a parent pointer in HC and grow it just for fun, for
+starters.  We'll take three bits for it, say
+
+         2
+
+      1  0  4
+
+         3
+
+with 5..7 available for special cases.
+
+[58:
+
+Wed Feb 27 07:54:06 2019 And what I was going to note a moment ago was
+that if we only melt HC -> SC at corners, we can splice such an HC out
+of the tree just within the event window.  Only the two adjacent
+orthogonal HCs could possibly be depending on the corner HC.. wait
+wait wait let's get our distance 2s and distance 4s sorted out here..
+
+       .
+      ...
+     5.2.7
+    .......
+   ..1.0.4..
+    .......
+     6.3.8
+      ...
+       .
+
+(Note we can turn those parent pointers into coords via
+2*ew.getCoord((SiteNum) parentPointer) !)
+
+So, yeah, that's nine possibilities taking four bits, if we're going
+to have much flexibility.  With this scheme, as I was saying, we can
+always melt a corner without breaking the tree, because if any of our
+possible neighbors was pointing at us we can retarget them to our
+parent and they can see that.
+
+     q2.7
+     q...
+     q0.4
+     qqqq
+
+Given we're melting 0, its parent must have been 2,7, or 4, and its
+only possible kids are 2, 7, and 4 as well.
+
+Buut note our current melting rule doesn't extend that far:
+
+  q__    ..@
+  q@_ -> ._.
+  qqq    ...
+
+and with just that rule, we could be in a situation like:
+
+
+    5.2.7
+    qq...
+     q0.4
+     qqqq
+
+but 4 and 5 cannot see each other so the tree could be broken if 0
+melted.
+
+But the bigger event window isn't recursive -- after we knock off the
+corner we're stuck.
+
+Could we have the HCs background swapping with each other trying to
+make the tree a list?  Or trying to make the tree use only orthogonal
+links?  If a diagonal link is a 'long bond' and an orthogonal link is
+a 'short bond', we could melt any corner that has only short bonds..
+[59:
+
+Wed Feb 27 08:25:30 2019 So is there a nice little algebra of bond
+shortening?  We're talking swapping entire HCs, I think, so that we
+don't (in these operations anyway) change the tree structure, we're
+just trying to 'relax' it so that it uses all othogonal bonds.  Now,
+our growth rule IS only to orthogonal sites, so the grid will
+initially be totally relaxed.
+
+Sample relaxed tree:
+
+     h<h h
+     v v v
+     h h h
+     c ^ v
+     h h<h
+
+
+Melt NW corner:
+
+     |-h h
+     v v v
+     h h h
+     c ^ v
+     h h<h
+
+Now it's got one long bond. ..And I don't see any local way to relax that..
+[60:
+
+Wed Feb 27 09:05:35 2019 Are there any kind of moves we can make
+locally?  It seems only in very restricted cases. [61:
+
+Wed Feb 27 09:06:26 2019 What if, just for a minute, we consider
+(effectively) ditching SC and doing something like a SwapLine to move
+the HC?  If the HC could use the inter-HC gap for positioning and
+movement slack, the HC can be the 'jelly' all by itself.[62:
+
+Wed Feb 27 09:39:24 2019 After morning moment..  So for starters we
+could leave the construction stuff rigid, as is.  Need to change the
+misaligned maintenance stuff.  Suppose we had a five-state var saying
+which way I've gone out of alignment..  Suppose we left behind some
+ephemeral thing saying this is where I was?  Suppose we used a literal
+SwapLine that anchors against IM?  Boils away if it loses contact with
+IM or SL.  Boils away if there's IM in the heading direction.  Grows
+in the orthogonal direction as long as there's adjacent IM.
+
+And just suspends HC maintenance when it's around?
+
+Let's try it.
+
+:62]
+
+
+:61]
+
+:60]
+:59]
+
+:58]
+
+
+:57]
+
+:56]
+
+:55]
+
+
+:54]
+[63:
+
+Wed Feb 27 17:03:15 2019 Hmm seems like maybe a 'legitimate bug' here
+in the splattr codegen, regarding beginSiteEval().  Right now it
+appears that a SPLATRuleSet calls beginSiteEval() on each of its
+directly-used SPLATKeyStates.  But the generated subclasses of
+SPLATKeyState don't override beginSiteEval, so we go only to
+SPLATKeyState.beginSiteEval(), and any keystates that are only
+INDIRECTLY used don't get reset.
+
+What we need is perhaps a single tree-walking beginSiteEval, or better
+to have splattr codegen walk the tree and generate a custom
+beginSiteEval for each subclass of SPLATKeyState, like it is already
+doing for given and vote?  But however it's fixed, I think that's the
+reason my
+
+   mm    ..
+   @x -> x@
+   nn    ..
+
+rule isn't firing..
+
+:63]

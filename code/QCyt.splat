@@ -1,12 +1,16 @@
 = quark QCyt isa QContent.  Base class for hard/soft 'cytoplasmic jelly'
 \symmetries all
+local constant Unsigned c
 
 == Data members
-
+ 
 u Bool mDie = false;
-
+ 
 == Methods
-
+u Self(Self & a) {  // Copy ctor                 
+.   mDie = a.mDie;  // Only data member so far..
+.}                
+   
 == Prerules (Death propagation)
 given @ isa QCyt : $self.mDie
 
@@ -15,16 +19,14 @@ vote q isa QCyt : $self.mDie = true  // Drive-by spreading the bad news
 check q : true                       // But we're decaying in any case
 
 change R isa Res
- 
+
      q             .
-    qqq           ...
    qqqqq         .....
-  qqqqqqq       .......
- qqqq@qqqq ->  ....R....
-  qqqqqqq       .......
    qqqqq         .....
-    qqq           ...
-     q             .
+  qqq@qqq  ->   ...R...  # Weird shape to not kill @IOIq
+   qqqqq         .....
+   qqqqq         .....
+     q             . 
 
 
 == Rules (Fatal conditions)

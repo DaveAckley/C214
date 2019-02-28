@@ -1,0 +1,7 @@
+= element WSL isa SwapLine
+\symbol WS
+\color #dd2
+\symmetries none
+
+== Methods
+u virtual Bool isAnchor(Atom a) { return a is InnerMembrane; }

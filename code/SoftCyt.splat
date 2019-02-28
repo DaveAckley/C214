@@ -1,0 +1,51 @@
+= element SoftCyt isa QCyt
+\symbol SC
+\color #5b5
+\symmetries all
+
+== Data members
+
+== Methods
+u HardCyt harden() {
+.   HardCyt hc;
+.   QCyt & qc = hc;
+.   qc = (QCyt) self;
+.   return hc;
+. }
+
+== Postrules (Harden)
+
+given @ isa SoftCyt // : plus hardening conditions..
+given h isa HardCyt
+change @ isa SoftCyt { ew[0] = $self.harden(); }
+
+   h@_   -> ._@
+
+   h.@   -> ..@
+
+== Postrules (Diffuse within matrix)
+
+given @ isa SoftCyt
+vote h isa HardCyt
+given r : !$curatom is HardCyt
+vote r : !$curatom is QMembrane
+let x = r|h
+
+check @ : $h.$nvotes > 0u && $r.$nvotes > 0u
+change @ { ew.swap(0u,$r.$winsn); }
+
+   hrh    ...
+   r@r -> .@.    # Corner to face
+   hrh    ...
+
+    x      .
+   x@x -> .@.    # Face to corner
+    x      .
+
+   @hr -> rh@    # Face to face
+
+== Postrules (5% decay, else hold)
+
+change @ { if (random.oneIn(20)) ew[0] = Res.instanceof; }
+
+   @ -> @
