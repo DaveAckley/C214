@@ -58,9 +58,8 @@ vote H isa HardCyt
     @  ->  .
    _HM    H@.
 
-== Rule (mostly wait)
+== Rule (Hodl)
 
 given @ isa SwapLine
-check @ : random.oddsOf(99,100)
 
    @ -> .

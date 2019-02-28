@@ -1,4 +1,4 @@
-{64}  -*- text -*-
+{77}  -*- text -*-
 [0:
 
 Wed Feb 20 03:00:03 2019 OK time for an ALIFE19 paper.  The goal is
@@ -741,3 +741,224 @@ reason my
 rule isn't firing..
 
 :63]
+[64:
+
+Thu Feb 28 09:41:50 2019 Well, I did ultimately lose on trying to use
+let m = s|a for the swapline advance rule, and ended up not only
+expressing it in ulam, but then copy-pasting the ulam for keycode n.
+
+So that was bad.  I suspect the issue was the code treats | in effect
+as || -- like it skips the 'given a' if the 'given s' part works at a
+site.  And somehow that matters, but the logic is so twisted and
+unclear -- especially the caching code -- that I can't keep it
+straight what the issues and arguments really are.
+
+But there's really no time to try to fix that now.  We have to get to
+movable cells and then cleanly reproducing cells PRONTO.
+
+:64]
+[65:
+
+Thu Feb 28 09:47:22 2019 So at present we have a west SwapLine largely
+working.  We have blocked SwapLine eventually randomly decaying and
+that's causing troules because the line needs to be blocked in certain
+cases, so we should get rid of that..[66:
+
+Thu Feb 28 09:51:54 2019 Also, still need to get the HC to not detect
+misalignment if SL are around..  and not even to try to grow at that
+point.. [67:
+
+Thu Feb 28 09:54:10 2019 About the nicest (at least living computation
+/ programming-y) thing we've got so far is the idea of using virtual
+functions in other elements to perform decision-making-on-the-fly
+rather than pulling additional state forward into the forward actor.
+
+We could think about extending that to more cases -- such as how many
+'crowding votes' a given piece of content should have.  With such a
+mechanism in hand we could have SwapLine count for extra crowding so
+the membrane would tend to back off and give SL room to work.  The
+current common blocking case is like:
+
+     OI                     OOO
+     OIH          or        OII
+     OIS                    OIH
+     OI S                   OIS
+
+where the upper S can't extend the swapline upwards until there's room
+behind the H to swap it backwards.  If S could say 'Give me space'
+that would help.
+
+[68:
+
+Thu Feb 28 09:56:53 2019 Possible title angles:
+
+Digital cell mechanics --
+Extreme stigmergy via virtual functions
+
+:68]
+
+:67]
+
+:66]
+
+:65]
+[69:
+
+Thu Feb 28 10:09:26 2019 Wellll, fudge.  So we're actually pretty
+fogged on the swapline-inside-membrane idea.  Because the cuteness of
+the swapline is that it has a simple spatial invariant -- as long as
+there's SL or IM in either x+-1 of each y+-1, the SL is consistent.
+
+But maintaining that invariant requires that the IM NOT MOVE WHEN AN
+SL IS RELYING ON IT.  So it's not enough that we were thinking the SL
+might ask the IM to back off and make room -- we'd ALSO have to be
+able to tell the IM not to move because we're counting on it as an
+invariant.
+
+So I think probably we should consider the swapline dead for this
+application, for the moment.
+
+Let's go back to thinking about the command & control from the
+approximate center of the cell.  Like:
+
+ - Once the cell is big enough, a cell near the center -- with its
+   W,E distances all about equal, and also its N,S distances -- may
+   declare itself the 'LEADER'.
+
+ - If an HC detects an adjacent (4 ngb) LEADER, it becomes a
+   'FOLLOWER'
+
+ - If a LEADER detects an adjacent LEADER, their 'centerednesses'
+   estimates are compared and the 'more centered' LEADER wins, with
+   ties going to @.  The loser is demoted to a newly-created FOLLOWER.
+
+[71: Thu Feb 28 11:18:02 2019 But maybe not this one?  The point of
+building a 'quieter' execution environment is to support relatively
+stable spatial structures, to use for computations involving more
+state than can fit in a single atom.  The LEADER presumably wants to
+use state in the FOLLOWERs, but if the LEADER flops around willy-nilly
+that will be hard to do.  I think we should allow the leader to drift
+off center at least somewhat.  :71]
+ - If the LEADER detects that a FOLLOWER is _more_ centered than the
+   LEADER, the LEADER swaps nearly completely with the FOLLOWER --
+   except it does not swap the WNSE info.
+
+[70:
+
+Thu Feb 28 11:16:21 2019 The leader[72:
+
+Thu Feb 28 11:21:45 2019 What if we say the followers are used to make
+a redundant state vector.  Well what state do we expect the leader
+will want to save?
+
+LEADER tasks:
+
+ - Issuing movement orders
+
+ - Waiting for order completion or timeout
+
+ - Holding the 'current mode'?
+
+ - Performing mode switching?
+
+[73:
+
+Thu Feb 28 11:27:36 2019 So surely one story is the LEADER is the CPU
+and program counter, and the FOLLOWER shared state is the program and
+data.
+
+So the WNSE distance gradients are an example of sensory data.  Those
+are so important they're 'built into' the HC.  But we could have a
+variety of other 'sense carriers' that head upgradient via the interHC
+gaps and serve to ...wait
+
+Suppose the FOLLOWERs represent a MODEL of the entire cell.
+
+Each (perhaps 8ngb) FOLLOWER is in effect responsible for representing
+(and eventually controlling) a quadrant (octant) of the cell.
+
+The POINT is to make AN EVENT WINDOW-SIZED MODEL of something that's
+MUCH BIGGER THAN AN EVENT WINDOW.  So we can weigh information from
+far-flung corners of the cell and make an informed decision in a
+single event.  (Albeit with necessarily somewhat stale information.)
+
+[74:
+
+Thu Feb 28 11:34:39 2019 So suppose a SenseCarrier works like this.
+It has a sense coordinate that is set to 0 when it's created, and is
+updated as the SC moves.  The SC does a stochastic hillclimb toward
+the center, and when it comes within range of the (a?) FOLLOWER
+responsible for that coordinate, the FOLLOWER integrates that data and
+consumes the SC.
+
+Doing 8 ngb followers could give us a better range of action, in the
+sense that we could move in 8 dirs based on the 8ngb max freespace,
+for example.  Although we could use ties or weighted choosing over
+4ngb to achieve similar effects, I suppose.
+
+So how could we get this cell to head towards free space?  We want to
+be sensing outside the membrane for that.
+
+Well, OM could record the outside density it sees, and perhaps do a
+little low-pass smoothing on that.  Every so often IM could generate
+and release an SC based on an adjacent OM density estimate.
+
+Or could OM do edge detection?  Track apparent changes in density and
+release SC preferentially or more frequently on changes?[75:
+
+Thu Feb 28 11:47:27 2019 OK, well about to have to head off to the
+shower and then busy busy in the world for a good chunk of the
+afternoon, but can we first get down to some
+
+TODO:
+
+ - Add an Unsigned(2) mRole to HC.  0 == visitor, 1 == employee, 2 ==
+   vice president, 3 == president.
+
+ - Get a centrally-located HC to declare itself P once the X and Y
+   diameters reach say 5 and there's no other P around
+
+ - Have 8ngb P's highlander it out as discussed
+
+ - Have HC who see a 4ngb P declare itself VP
+
+[maybe
+ - Otherwise have HC who see a 4ngb VP declare itself employee
+
+ - Otherwise have HC who see a 4ngb employee maybe declare themselves
+   employee.  Like 50-50?
+
+ - Otherwise have HC declare itself visitor
+ ]
+
+ - Have getColor identify the 'C-suite' occupants
+
+ - Have OM measure and store exterior density excluding Res.  Store it
+   in five bits?  Have the density denominator be not the event window
+   size but only the stuff outside the OM?  Can we do that?  
+
+ - Have IM average the exterior density of its local OM.  Store it in
+   five bits too?
+
+ - Have IM release a sense-density thing every so often
+
+ - Create a Reporter class that climbs the corporate ladder and gets
+   eaten by VPs.
+
+:75]
+
+:74]
+
+:73]
+
+:72]
+
+:70]
+
+:69]
+[76:
+
+Thu Feb 28 12:11:51 2019 Have to start packing up.  See yall on the
+other side.
+
+:76]
