@@ -4,20 +4,37 @@
 \symmetries all
 local constant Unsigned cDISTANCE_BITS = 4u;
 local typedef Unsigned(cDISTANCE_BITS) Distance;
+local constant Unsigned cROLE_BITS = 2u;
+local typedef Unsigned(cROLE_BITS) Role;
+local constant Unsigned cCORPORATE_DIAMETER = 5u;
 local typedef EventWindow.SiteNum SiteNum;
-local constant Unsigned cCELL_TARGET_DIAMETER = 6u;
+local constant Unsigned cCELL_TARGET_DIAMETER = 7u;
 local constant Unsigned cCELL_TARGET_RADIUS = cCELL_TARGET_DIAMETER / 2u;
-local typedef Unsigned(3) ParentPointer;
+#local typedef Unsigned(3) ParentPointer;
 
 == Data members
 u Distance mDistances[4];  // WNSE
-u ParentPointer mParent;
+#u ParentPointer mParent;
+u Role mRole = 0;  // What level I am in the organization
+u Bool mServing = false;  // Whether I'm part of an established chain of command
 
 == Methods
+getColor {
+.  if (mDie) return cu.color(0xffffffu); // White for death
+.  if (mRole == mRole.maxof) return cu.color(0xffff00u);
+.  if (mRole == mRole.maxof-1u) return cu.color(0xbbbb00u);
+.  if (mRole == mRole.maxof-2u) return cu.color(0x999900u);
+.  return super.getColor($selector);
+. }
+
 u SoftCyt soften() {
 .   SoftCyt sc;         // All defaults
 .   QCyt & qc = sc;
 .   qc = self;          // Copy shared state
+.    DebugUtils du;
+.    du.print("Softening ->");
+.    du.print(self);
+.    du.print(sc);
 .   return sc;
 . }
 
@@ -28,6 +45,13 @@ u Unsigned getWidthEstimate() {
 u Unsigned getHeightEstimate() {
 .   return (1u + mDistances[1] + mDistances[2]); // us+N+S
 . }
+
+u C2D getPositionEstimate() {
+.   C2D pos;
+.   pos.set((Int) mDistances[3] - mDistances[0],(Int) mDistances[2] - mDistances[1]);
+.   return pos;
+. }
+
 
 u Bool shouldImport(Atom atom) {
 .   return
@@ -96,6 +120,63 @@ check @ {
  x.@ -> ...
 
 
+== Postrules (If not me then who)
+
+given @ isa HardCyt :
+.  $self.mRole != Role.maxof &&                        // Not already the leader, not
+.  !$self.mServing &&                                  // in the chain of command leader, but
+.  $self.getWidthEstimate() >= cCORPORATE_DIAMETER &&  // the world is
+.  $self.getHeightEstimate() >= cCORPORATE_DIAMETER && // big enough and we seem
+.  $self.getPositionEstimate().isOrigin()              // to be dead center of it
+
+change @ isa HardCyt {
+.  ++$self.mRole;                    // I'm more important here than I thought
+.  if ($self.mRole == Role.maxof)    // In fact, I say I'm now
+.    $self.mServing = true;          // serving as the leader of us all
+. }
+
+given h isa HardCyt :
+.  $self.mRole != Role.maxof &&
+.  !$self.mServing
+
+  h.h.h      .....
+  .....      .....
+  h.@.h  ->  ..@..
+  .....      .....
+  h.h.h      .....
+
+== Postrules (C-suite management)
+
+scratch 0 = 0       // To max over ngb roles
+
+given @ isa HardCyt :
+.  $self.mRole != Role.maxof                           // Not already the leader, but
+
+vote h isa HardCyt {
+.  if (!$self.mServing) return 0u;
+.  if ($self.mRole > $0) $0 = $self.mRole;  // New front-runner
+.  return 1u;
+. }
+
+check @ {
+.  HardCyt & hc = (HardCyt&) ew[0];
+.  if ($h.$nvotes > 0u) {
+.    hc.mRole = (Role) ($0 - 1);  // Saturating at 0u below
+.    hc.mServing = (hc.mRole > 0u);
+.  } else {                // If nobody to serve
+.    hc.mRole = 0u;        // then I have no role
+.    hc.mServing = false;  // and I'm not serving
+.  }
+.  return false;  // Drive-by update
+. }
+
+    h          .
+    .          .
+  h.@.h  ->  ..@..
+    .          .
+    h          .
+
+
 == Postrules (Growth)
 
 given @ isa HardCyt
@@ -133,22 +214,28 @@ change @ {
     www      ...
      h        .
 
-== Postrules (Corner melting)
+== Postrules (Spike and corner melting)
 
 given @ isa HardCyt :
-.    $self.getWidthEstimate() > cCELL_TARGET_RADIUS
-. && $self.getHeightEstimate() > cCELL_TARGET_RADIUS
+.    $self.getWidthEstimate() >= cCELL_TARGET_DIAMETER
+. && $self.getHeightEstimate() >= cCELL_TARGET_DIAMETER
 
 given q isa QMembrane
 check _ : random.oneIn(5)
 
-change @ isa HardCyt { 
+change @ isa HardCyt {
 . ew[$_.$winsn] = $self.soften();
 . ew[0] = Empty.instanceof;
 .}
 
-  q__    ..@
-  q@_ -> ._.
+
+  qqq    ...
+  q@_ -> .@.
+  qqq    ...
+
+
+  q__    ...
+  q@_ -> .@.
   qqq    ...
 
 
