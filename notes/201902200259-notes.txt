@@ -1,4 +1,4 @@
-{77}  -*- text -*-
+{88}  -*- text -*-
 [0:
 
 Wed Feb 20 03:00:03 2019 OK time for an ALIFE19 paper.  The goal is
@@ -912,10 +912,12 @@ afternoon, but can we first get down to some
 
 TODO:
 
- - Add an Unsigned(2) mRole to HC.  0 == visitor, 1 == employee, 2 ==
+[78: Fri Mar  1 03:11:25 2019
+DONE :78] - Add an Unsigned(2) mRole to HC.  0 == visitor, 1 == employee, 2 ==
    vice president, 3 == president.
 
- - Get a centrally-located HC to declare itself P once the X and Y
+[79: Fri Mar  1 03:11:33 2019 
+DONE :79] - Get a centrally-located HC to declare itself P once the X and Y
    diameters reach say 5 and there's no other P around
 
  - Have 8ngb P's highlander it out as discussed
@@ -931,7 +933,8 @@ TODO:
  - Otherwise have HC declare itself visitor
  ]
 
- - Have getColor identify the 'C-suite' occupants
+[80: Fri Mar  1 03:11:44 2019
+DONE :80] - Have getColor identify the 'C-suite' occupants
 
  - Have OM measure and store exterior density excluding Res.  Store it
    in five bits?  Have the density denominator be not the event window
@@ -962,3 +965,78 @@ Thu Feb 28 12:11:51 2019 Have to start packing up.  See yall on the
 other side.
 
 :76]
+[77:
+
+Fri Mar  1 00:14:46 2019 OK here we are.  Jeez now it's March.
+
+:77]
+[81:
+
+Fri Mar  1 03:42:32 2019 So, we're kind of growing a 'nucleus' thing
+now, although it doesn't do anything except exist.  What I'm realizing
+is we are going to have an extra-cellular environment that's just
+plastered full of Res, and that that's a hint.
+
+We should have cellular operations routinely _consume_ Res.  Res
+should not just be for transmuting into HC, it should power
+everything, and the cell should not stop importing it just because
+it's reached a mature size.
+
+So I think QCyt or HC should have an mEnergy variable, that it runs
+down by doing things, and charges up by consuming Res.  Or if we're
+really disruptive, by transmuting Res into Ser or Waste or whatever we
+want to call it.  The Ser would routinely be ejected from the cell,
+where it would then gradually get converted into Res by the action of
+DReg.
+
+HC should send Ser downgradiant.  We'd like Ser to do that itself but
+it seems kind of non-physical?  Maybe not.
+
+Let's commit this nucleus stuff and then try some kind of waste
+metabolism demo.
+
+[82:
+
+Fri Mar  1 03:48:53 2019 Although, looking at the movie I'm making
+here, we are facing another leader conflict example.  Not sure how it
+came to happen but it makes me want to be able to distinguish between
+VPs that are looking to a leader and those that are just wondering if
+they'll win the leader race.  Once someone is looking to a leader
+everybody nearby needs to FOGGEN GET ON BOARD.
+
+:82]
+
+:81]
+[83:
+
+Fri Mar  1 04:34:04 2019 Leaving the previous movie accumulating.
+Have some untested cuts at a 'mServing' data member in
+HardCyt.. whups, the movie cell just exploded somehow.  Guess we
+should kill that run and generate the movie..[84:
+
+Fri Mar  1 04:44:57 2019 Well not clear.  DReg opened the membrane
+long enough for QCyt to see OM is the guess.[85:
+
+Fri Mar  1 13:23:24 2019 OK made an mServing hack but in the lunch run
+never got a core developing.  [86:
+
+Fri Mar  1 13:39:54 2019 OK this run got a core which is looking
+pretty stable so far..
+
+:86]
+
+:85]
+
+:84]
+
+:83]
+[87:
+
+Fri Mar  1 14:21:07 2019 Well basically I think we have to try the
+Res-metabolism story, even though of course we totally don't have
+anything like the time to undertake such a massive rethink.
+
+So we're going to commit this current snapshot (with barely-tested
+mServing and all) and then try it.
+
+:87]
