@@ -1,6 +1,7 @@
-SPLATTR:=/data/ackley/PART4/code/D/SPLAT/blib/script/splattr
-MFZRUN:=/data/ackley/PART4/code/D/MFM/bin/mfzrun
-MFZGEOMETRY:={{2H1}}
+SPLATTR:=/home/ackley/PART4/code/D/SPLAT/blib/script/splattr
+MFZRUN:=/home/ackley/PART4/code/D/MFM/bin/mfzrun
+MFZGEOMETRY:={{1H1}}
+MFZBIGGEOMETRY:={{2H2}}
 MFZARGS:=$(MFZGEOMETRY) -n
 MFZARGS_MOVIE_150AER:=$(MFZGEOMETRY) -n -a 0 -p 30 -e 5
 MFZARGS_MOVIE_ACC:=$(MFZGEOMETRY) -n -a 0 -p 30 -e 0 --accelerate 180 --surge 360
