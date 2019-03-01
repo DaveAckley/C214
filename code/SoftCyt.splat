@@ -19,7 +19,7 @@ given @ isa SoftCyt // : plus hardening conditions..
 given h isa HardCyt
 change @ isa SoftCyt { ew[0] = $self.harden(); }
 
-   h@_   -> ._@
+#   h@_   -> ._@
 
    h.@   -> ..@
 
