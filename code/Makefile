@@ -3,7 +3,7 @@ MFZRUN:=/home/ackley/PART4/code/D/MFM/bin/mfzrun
 MFZGEOMETRY:={{1H1}}
 MFZBIGGEOMETRY:={{2H2}}
 MFZARGS:=$(MFZGEOMETRY) -n
-MFZARGS_MOVIE_150AER:=$(MFZGEOMETRY) -n -a 0 -p 30 -e 5
+MFZARGS_MOVIE_FIXEDAER:=$(MFZGEOMETRY) -n -a 0 -p 30 -e 10
 MFZARGS_MOVIE_ACC:=$(MFZGEOMETRY) -n -a 0 -p 30 -e 0 --accelerate 180 --surge 360
 DIR:=$(shell pwd)
 DEMO:=$(shell basename "$(DIR)")
@@ -11,15 +11,17 @@ TIMESTAMP:=$(shell date +%Y%m%d-%H%M%S)
 DEV:=$(shell whoami)
 ISHNAME:=ISH-$(TIMESTAMP)-$(DEV)
 THIS_DIR:=$(strip $(notdir $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))))
+SPLAT_FILES:=$(wildcard *.splat)
+ULAM_FILES:=$(wildcard *.ulam)
 
-$(DEMO).mfz:	*.splat *.ulam | Makefile* 
+$(DEMO).mfz:	$(SPLAT_FILES) $(ULAM_FILES) | Makefile* 
 	$(SPLATTR) $^ $@
 
 run:	$(DEMO).mfz
 	$(MFZRUN) $^ run $(MFZARGS)
 
 movie:	$(DEMO).mfz
-	$(MFZRUN) $^ run $(MFZARGS_MOVIE_150AER)
+	$(MFZRUN) $^ run $(MFZARGS_MOVIE_FIXEDAER)
 
 movie2:	$(DEMO).mfz
 	$(MFZRUN) $^ run $(MFZARGS_MOVIE_ACC)
