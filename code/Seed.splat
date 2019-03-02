@@ -4,7 +4,11 @@
 == Rules: Germination
 change o isa OuterMembrane
 change i isa InnerMembrane
-change c isa HardCyt
+change c {
+.   HardCyt hc;
+.   hc.mEnergy = hc.mEnergy.maxof;
+.   ew[0] = hc;
+. }
 
    _____      ooooo
    _____      oiiio
