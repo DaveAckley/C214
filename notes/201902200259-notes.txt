@@ -1,4 +1,4 @@
-{88}  -*- text -*-
+{96}  -*- text -*-
 [0:
 
 Wed Feb 20 03:00:03 2019 OK time for an ALIFE19 paper.  The goal is
@@ -1040,3 +1040,104 @@ So we're going to commit this current snapshot (with barely-tested
 mServing and all) and then try it.
 
 :87]
+[88:
+
+Fri Mar  1 14:32:15 2019 OK, committed.  Res metabolism
+
+TODO:
+
+DONE - Decide if we're closing the loop 'materially' or only
+   'energetically'.  In the latter case we don't need a 'Turd'
+   particle.  We just consume the Res and let empty space represent
+   lack of free energy.
+
+   Well it seems the whole DReg concept pushes for 'energetic'
+   closure, since it doesn't make any distinction between types of
+   material (other than DReg itself).
+
+   Let's at least start with energetic closure.  
+
+[89: Sat Mar  2 01:02:50 2019 
+DONE :89] - Make an Unary(2) mEnergy for QCyt.  Have a high-level rule that
+   consumes Res with mEnergy < mEnergy.maxof.
+
+[90: Sat Mar  2 01:02:58 2019
+DONE:90] - Brighten QCyt getColor in proportion to mEnergy
+
+[91: Sat Mar  2 01:03:13 2019
+DONE:91] - Start making rules require mEnergy > 0 and start decrementin
+   mEnergy when they fire.
+
+:88]
+[92:
+
+Sat Mar  2 01:03:18 2019 So before nap we got to the idea of moving
+the cell by having the leader move, and design the rest of the cell to
+fall towards having the leader in the middle of the cell.
+
+Right now, the 'mRole' provides a small amount of gradient around the
+leader.  If we said something like "serving HC don't melt" that would
+create a weak bias towards keeping the leader in the middle.
+
+:92]
+
+[93:
+
+Sat Mar  2 04:25:57 2019 OK, so trying to drag the cell by moving the
+leader, and preventing the c-suite from melting, is, at best, very
+slow.  Kind of like the non-accelerated chain in the original 'large
+object motion' video (Asymmetric diffusion of bonded structures in the
+Movable Feast Machine, October 2011).
+
+And, worse, once the core had gotten far enough off center, and the
+cell gotten big enough, a second leader and emerged.  We're not ready
+to deal with that.
+
+So, if we ditch mRole as an explicit data member, and go to a second
+x,y pairing for location relative to the leader, we can avoid the
+second leader problem and likely accelerate movement significantly.
+
+It 'just' means burning another non-trivial chunk of HC bits for a
+second coordinate system.  Like 2xInt(5) perhaps?  2xInt(4) possibly?
+And we soften/don't harden when we appear maxed on a coordinate?
+Perhaps reserve Int(4).minof as an initial value and a code meaning
+'no leader seen'?
+
+What do these gradients relax to in absence of a leader to anchor
+them?  I guess if a guy thinks he's distance one but doesn't see the
+leader, he punts to 'no signal', and that just propagates?  How does
+it propagate?  What does seeing 2 + 3 + nosignal, say, result in?
+
+Answer: A nap.
+[94:
+
+Sat Mar  2 13:45:40 2019 OK so back from morning errands, including
+picking up and trying out the M3x28mm socket cap screws for the case
+corners.  They're a hair short, in principle 29mm might be better, but
+30mm would be way long so..  They catch okay in the M3 nuts; as long
+as they catch a few turns in the brass standoffs it'll be fine.
+
+Anyway.[95:
+
+Sat Mar  2 16:30:00 2019 So we will follow the mRole style and just
+have a single Z value, instead of another set of X + Y values.  The
+leader is the king of the hill and everybody else does max-1 on their
+neighbors.  We'll do merely an Unsigned(3), say, for Z value, because
+that still gives us a radius of 14 HC, which is about right for our
+cells.
+
+I'm wondering about having (at least) melted SC maintain enough state
+that they can make a visit toward the center, and, after they get
+close enough, then head for the nearest membrane wall.  A little
+Unary(2) could be enough for that, or Unsigned(2) if we wanted a
+little room to grow.
+
+TODO:
+
+ - IMPLEMENT ALL THAT NOW NOW NOW
+
+:95]
+
+:94]
+
+:93]
