@@ -13,6 +13,13 @@ u HardCyt harden() {
 .   return hc;
 . }
 
+getColor {
+.  if (mDie) return cu.color(0xffffffu); // White for death
+.  ColorUtils.ARGB base = super.getColor($selector);
+.  ColorUtils.ARGB flavor = cu.color(0x55bb55u);
+.  return modulate(base,flavor);
+. }
+
 == Postrules (Harden)
 
 given @ isa SoftCyt // : plus hardening conditions..

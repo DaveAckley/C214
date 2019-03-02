@@ -9,6 +9,7 @@ local typedef Unsigned(cROLE_BITS) Role;
 local constant Unsigned cCORPORATE_DIAMETER = 5u;
 local typedef EventWindow.SiteNum SiteNum;
 local constant Unsigned cCELL_TARGET_DIAMETER = 7u;
+local constant Unsigned cCELL_TARGET_VOLUME = cCELL_TARGET_DIAMETER * cCELL_TARGET_DIAMETER;
 local constant Unsigned cCELL_TARGET_RADIUS = cCELL_TARGET_DIAMETER / 2u;
 #local typedef Unsigned(3) ParentPointer;
 
@@ -21,16 +22,19 @@ u Bool mServing = false;  // Whether I'm part of an established chain of command
 == Methods
 getColor {
 .  if (mDie) return cu.color(0xffffffu); // White for death
-.  if (mRole == mRole.maxof) return cu.color(0xffff00u);
-.  if (mRole == mRole.maxof-1u) return cu.color(0xbbbb00u);
-.  if (mRole == mRole.maxof-2u) return cu.color(0x999900u);
-.  return super.getColor($selector);
+.  ColorUtils.ARGB base = super.getColor($selector);
+.  ColorUtils.ARGB flavor = cu.color(0x5555bbu);
+.  if (mRole == mRole.maxof) flavor = cu.color(0xffff00u);
+.  if (mRole == mRole.maxof-1u) flavor = cu.color(0xbbbb00u);
+.  if (mRole == mRole.maxof-2u) flavor = cu.color(0x999900u);
+.  return modulate(base,flavor);
 . }
 
 u SoftCyt soften() {
 .   SoftCyt sc;         // All defaults
 .   QCyt & qc = sc;
-.   qc = self;          // Copy shared state
+.   mEnergy -= 2u;      // Pay energy first
+.   qc = self;          // Now copy shared state
 .    DebugUtils du;
 .    du.print("Softening ->");
 .    du.print(self);
@@ -46,6 +50,10 @@ u Unsigned getHeightEstimate() {
 .   return (1u + mDistances[1] + mDistances[2]); // us+N+S
 . }
 
+u Unsigned getVolumeEstimate() {
+.   return getWidthEstimate() * getHeightEstimate();
+. }
+
 u C2D getPositionEstimate() {
 .   C2D pos;
 .   pos.set((Int) mDistances[3] - mDistances[0],(Int) mDistances[2] - mDistances[1]);
@@ -54,16 +62,22 @@ u C2D getPositionEstimate() {
 
 
 u Bool shouldImport(Atom atom) {
-.   return
-.       atom is Res
-.    && getWidthEstimate() < cCELL_TARGET_DIAMETER
-.    && getHeightEstimate() < cCELL_TARGET_DIAMETER // us+N+S
+.   return true
+.      && atom is Res
+.      && (mEnergy < mEnergy.maxof  // ..and either I can use it, or the cell
+.       || getVolumeEstimate() < cCELL_TARGET_VOLUME  // could stand to be bigger
+.         )
 .   ;
 . }
 
 u Bool shouldExport(Atom atom) {
 .   return
-.       atom is DReg
+.       atom is DReg  // We don't want DReg in here AT ALL
+.    || (atom is Res  // But we like Res.  Only eject it if
+.     && !mServing    // I'm not in the administration, and
+.     && mEnergy == mEnergy.maxof   // I don't need it, and the cell
+.     && getVolumeEstimate() > cCELL_TARGET_VOLUME  // doesn't need to be bigger
+.       )
 .   ;
 . }
 
@@ -87,11 +101,18 @@ u Unsigned getNorthIndex() {
 == Rules (Fatal conditions)
 given @ isa HardCyt :
 .  !$self.mDie &&                                 // Not already dying, and
-.  ($self.getWidthEstimate() >= Distance.maxof || // somehow
+.  ($self.getWidthEstimate() >= Distance.maxof || // somehow hopelessly
 .   $self.getHeightEstimate() >= Distance.maxof)  // oversized
 change @ isa QCyt { $self.mDie = true; }
 
   @ -> @
+
+== Postrules (Leader movement)
+given @ isa HardCyt : $self.mRole == $self.mRole.maxof
+given S isa Swapon
+given h isa HardCyt
+
+ hS@ -> @_h
 
 == Postrules (Update distance estimates)
 
@@ -179,14 +200,18 @@ check @ {
 
 == Postrules (Growth)
 
-given @ isa HardCyt
+given @ isa HardCyt : $self.mEnergy == $self.mEnergy.maxof
 
 vote e isa Empty
 vote r isa Res
 
 change @ {
 .   if ($e.$nvotes > 0u && $r.$nvotes > 0u) {
-.     ew[$e.$winsn] = ew[0];
+.     HardCyt & hc = (HardCyt&) ew[0];
+.     hc.mEnergy = 0u;       // Reproduction is tiring to all
+.     HardCyt copy = hc;
+.     --copy.mRole = 0u;     // Copy has to find its own job
+.     ew[$e.$winsn] = copy; 
 .     ew[$r.$winsn] = Empty.instanceof;
 .   }
 . }
@@ -217,8 +242,9 @@ change @ {
 == Postrules (Spike and corner melting)
 
 given @ isa HardCyt :
-.    $self.getWidthEstimate() >= cCELL_TARGET_DIAMETER
-. && $self.getHeightEstimate() >= cCELL_TARGET_DIAMETER
+.    $self.mServing == false
+. && $self.getVolumeEstimate() > cCELL_TARGET_VOLUME
+
 
 given q isa QMembrane
 check _ : random.oneIn(5)

@@ -1,15 +1,21 @@
 = quark QCyt isa QContent.  Base class for hard/soft 'cytoplasmic jelly'
 \symmetries all
-local constant Unsigned c
+local typedef Unary(2) Energy;
 
 == Data members
  
 u Bool mDie = false;
+u Energy mEnergy = 0u;
  
 == Methods
 u Self(Self & a) {  // Copy ctor                 
 .   mDie = a.mDie;  // Only data member so far..
 .}                
+
+getColor {
+.   ColorUtils.Byte b = (ColorUtils.Byte) (0x80 + mEnergy*0x20);
+.   return cu.color(b,b,b);
+. }
    
 == Prerules (Death propagation)
 given @ isa QCyt : $self.mDie
@@ -40,19 +46,43 @@ change @ isa QCyt { $self.mDie = true; }
  ooo    ...
 
 
-== Rules (Seed gradient)
-given i isa InnerMembrane : $self.mGradVal == $self.mGradVal.maxof
-check @ : random.oneIn(1000)
-change i isa InnerMembrane { $self.mGradVal = $self.mGradVal.minof; }
+# == Rules (Seed gradient)
+# given i isa InnerMembrane : $self.mGradVal == $self.mGradVal.maxof
+# check @ : random.oneIn(1000)
+# change i isa InnerMembrane { $self.mGradVal = $self.mGradVal.minof; }
 
- i@ -> i.
+#  i@ -> i.
 
-== Rules (Growth)
+== Rules (Powerup)
 
-given @ isa QCyt
+given @ isa QCyt : $self.mEnergy < Energy.maxof
 given R isa Res
+change @ isa QCyt { ++$self.mEnergy; }
 
-  @.R -> @.@
+  @R -> @_
+
+== Rules (Drive-by power distribution)
+
+given @ isa QCyt : $self.mEnergy < Energy.maxof
+vote q isa QCyt : $self.mEnergy == Energy.maxof
+check @ {
+.  if ($q.$nvotes > 0u) {
+.    QCyt & qc = (QCyt&) ew[0];
+.    QCyt & q2 = (QCyt&) ew[$q.$winsn];
+.    --q2.mEnergy;
+.    ++qc.mEnergy;
+.  }
+.  return false;
+. }
+
+  @qq -> @..
+
+# == Rules (Growth)
+
+# given @ isa QCyt
+# given R isa Res
+
+#   @.R -> @.@
 
 # == Rules (Maturity)
 # # Try to complete crystallization

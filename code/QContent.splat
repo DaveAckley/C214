@@ -3,13 +3,24 @@
 = quark QContent. The parent class of membrane-enclosed content
 
 == Methods
+
+# Helper method
+u ColorUtils.ARGB modulate(ColorUtils.ARGB base, ColorUtils.ARGB flavor) {
+.  ColorUtils.ARGB ret;
+.  ret[0] = 0xff;
+.  for (Int i = 1; i < 4; ++i) {
+.    ret[i] = (ColorUtils.Channel) (base[i]+((Int) flavor[i]-0x80));
+.  }
+.  return ret;
+. }
+
 u /** Return true if the membrane should import atom right now
 u  * By default always returns false
 u  */
 u virtual Bool shouldImport(Atom atom) {
 u   return false;
 u }
-u
+
 u /** Return true if the membrane should export atom right now
 u  * By default always returns false
 u  */
