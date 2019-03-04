@@ -1,0 +1,89 @@
+= element Cilium.  A sentry and sensory extracellular assistant
+\symbol Ci
+\color #833
+\symmetries all
+
+== Rules
+given @ isa Cilium
+
+# Shutdown if too crowded (indirectly consuming excess Res)
+
+vote C : $curatom is Res || $curatom is Cilium
+check C : $nvotes > 5u
+
+   CCC    ...
+   C@C -> ._.
+   CCC    ...
+
+
+# Push DReg
+
+vote o isa OuterMembrane
+vote d isa DReg
+
+change d { ew.swap($_.$winsn,$d.$winsn); }
+
+ _ddd@oooo  -> .d.......
+
+ _          .
+  d          d
+   @oo   ->   ...
+   ooo        ...
+   ooo        ...
+
+    @o   ->    ..
+   _do        d..
+
+
+# Pull Res
+vote r isa Res
+change r { ew.swap($_.$winsn,$r.$winsn); }
+
+ rrr@_oo    -> ....r..
+
+
+ rrr_@oooo  -> .r.......
+
+ r          .
+  _          r
+   @oo   ->   ...
+   ooo        ...
+   ooo        ...
+
+
+# Swap Res in if we're too close anyway
+vote R isa Res
+
+  R@o  -> @R.
+
+
+# Diffuse near OM
+
+vote n : !($curatom is OuterMembrane)
+vote e isa Empty
+change e { ew.swap($e.$winsn,$@.$winsn); }
+
+   @     ->  .
+   enoo      e...
+
+   e@oo  ->  e...
+
+  @enoo  ->  .e...
+
+# Shutdown if isolated
+
+given n : !($curatom is OuterMembrane)
+
+      n                .
+      n                .
+      n                .
+      n                .
+  nnnn@nnnn  ->    ...._....
+      n                .
+      n                .
+      n                .
+      n                .
+
+# Else hodl
+
+  @ -> .

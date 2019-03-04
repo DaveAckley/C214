@@ -1,10 +1,10 @@
 SPLATTR:=/home/ackley/PART4/code/D/SPLAT/blib/script/splattr
 MFZRUN:=/home/ackley/PART4/code/D/MFM/bin/mfzrun
 MFZGEOMETRY:={{1H1}}
-MFZBIGGEOMETRY:={{2H2}}
+MFZBIGGEOMETRY:={{2H1}}
 MFZARGS:=$(MFZGEOMETRY) -n
 MFZARGS_MOVIE_FIXEDAER:=$(MFZGEOMETRY) -n -a 0 -p 30 -e 10
-MFZARGS_MOVIE_ACC:=$(MFZGEOMETRY) -n -a 0 -p 30 -e 0 --accelerate 180 --surge 360
+MFZARGS_MOVIE_ACC:=$(MFZBIGGEOMETRY) -n -a 0 -p 30 -e 0 --accelerate 150 --warpfactor 1
 DIR:=$(shell pwd)
 DEMO:=$(shell basename "$(DIR)")
 TIMESTAMP:=$(shell date +%Y%m%d-%H%M%S)

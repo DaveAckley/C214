@@ -26,6 +26,16 @@ change D { ew.swap($X.$winsn,$D.$winsn); }
    XXD@ -> D...
     XD      ..
 
+# Deploy cilia
+given Z : !($curatom is Cilium || $curatom is QMembrane)
+vote Z isa Res
+change Z { ew[$Z.$winsn] = Cilium.instanceof; }
+
+   ZZZ     ...
+   ZZZ@ -> Z...
+   ZZZ     ...
+
+
 # Import/export
 vote C isa QContent
 
@@ -72,7 +82,7 @@ given b isa OuterMembrane
 given c isa InnerMembrane
 
 given e : true      // Allow dead sites
-vote  e isa Empty   // Count empty sites
+vote  e : $curatom is Empty || $curatom is Cilium // Count cilia as empty!
 check e : $nvotes*3u>=$nsites*2u
 
 vote  f : ($curatom is QContent) || ($curatom is Res)   // Count up legit content

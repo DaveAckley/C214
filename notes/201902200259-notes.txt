@@ -1,4 +1,4 @@
-{96}  -*- text -*-
+{99}  -*- text -*-
 [0:
 
 Wed Feb 20 03:00:03 2019 OK time for an ALIFE19 paper.  The goal is
@@ -1134,6 +1134,10 @@ little room to grow.
 
 TODO:
 
+[96: Sat Mar  2 16:43:22 2019 Well, first
+
+DONE - Commit the Res metabolism stuff, then.. :96]
+
  - IMPLEMENT ALL THAT NOW NOW NOW
 
 :95]
@@ -1141,3 +1145,34 @@ TODO:
 :94]
 
 :93]
+[97:
+
+Sat Mar  2 16:51:04 2019 Well, it _seems_, just growing
+HC.ulam:cROLE_BITS from 2u to 3u will do a fair chunk of the 'Z
+gradient' redo.  Current question is whether the 'Bool mServing' is
+really doing anything but confusing us?
+
+:97]
+[98:
+
+Mon Mar  4 06:48:14 2019 Well the cell in the overnight run survived
+past 600kAEPS, but didn't make a whole lot of progress heading east.
+It developed a tile-spanning vertical front that looked hard to break
+out of.  Suspicion is that this code
+
+    u Bool inFreezingRange() {
+    .   return getOutDistanceEstimate() <= Role.maxof/2u;
+    . }
+
+in HardCyt.splat is implicated -- with Role.maxof/2u == 7 and the HCs
+spaced at period two, that's ~15 HCs taking ~30 sites, plus ~4 for the
+membranes.  So we think we want to change it to:
+
+    u Bool inFreezingRange() {
+    .   return getOutDistanceEstimate() <= cCORPORATE_DIAMETER;
+    . }
+
+but wanted to commit the code associated with the run first.
+
+
+:98]

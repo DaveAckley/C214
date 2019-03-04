@@ -1,32 +1,32 @@
 = element HardCyt isa QCyt
 \symbol HC
-\color #55b
+\color #75b
 \symmetries all
 local constant Unsigned cDISTANCE_BITS = 4u;
 local typedef Unsigned(cDISTANCE_BITS) Distance;
-local constant Unsigned cROLE_BITS = 2u;
+local constant Unsigned cROLE_BITS = 4u;
 local typedef Unsigned(cROLE_BITS) Role;
 local constant Unsigned cCORPORATE_DIAMETER = 5u;
 local typedef EventWindow.SiteNum SiteNum;
 local constant Unsigned cCELL_TARGET_DIAMETER = 7u;
 local constant Unsigned cCELL_TARGET_VOLUME = cCELL_TARGET_DIAMETER * cCELL_TARGET_DIAMETER;
 local constant Unsigned cCELL_TARGET_RADIUS = cCELL_TARGET_DIAMETER / 2u;
-#local typedef Unsigned(3) ParentPointer;
 
 == Data members
 u Distance mDistances[4];  // WNSE
-#u ParentPointer mParent;
-u Role mRole = 0;  // What level I am in the organization
+u Role mRole = Role.maxof;  // What level I am in the organization (if mServing)
 u Bool mServing = false;  // Whether I'm part of an established chain of command
 
 == Methods
 getColor {
 .  if (mDie) return cu.color(0xffffffu); // White for death
 .  ColorUtils.ARGB base = super.getColor($selector);
-.  ColorUtils.ARGB flavor = cu.color(0x5555bbu);
-.  if (mRole == mRole.maxof) flavor = cu.color(0xffff00u);
-.  if (mRole == mRole.maxof-1u) flavor = cu.color(0xbbbb00u);
-.  if (mRole == mRole.maxof-2u) flavor = cu.color(0x999900u);
+.  ColorUtils.ARGB flavor = cu.color(0x7755bbu);
+.  if (mServing) {
+.    if (mRole == mRole.maxof)         flavor = cu.color(0xffff00u);
+.    else if (mRole == mRole.maxof-1u) flavor = cu.color(0xbbbb00u);
+.    else if (mRole == mRole.maxof-2u) flavor = cu.color(0x999900u);
+.  }
 .  return modulate(base,flavor);
 . }
 
@@ -35,10 +35,10 @@ u SoftCyt soften() {
 .   QCyt & qc = sc;
 .   mEnergy -= 2u;      // Pay energy first
 .   qc = self;          // Now copy shared state
-.    DebugUtils du;
-.    du.print("Softening ->");
-.    du.print(self);
-.    du.print(sc);
+.//    DebugUtils du;
+.//    du.print("Softening ->");
+.//    du.print(self);
+.//    du.print(sc);
 .   return sc;
 . }
 
@@ -60,12 +60,20 @@ u C2D getPositionEstimate() {
 .   return pos;
 . }
 
+u Unsigned getOutDistanceEstimate() {
+.   if (!mServing) return 0u;             // initial condition
+.   return mRole.maxof - mRole;           // Leader is 0 and on up
+. }
+
+u Bool inFreezingRange() {
+.   return getOutDistanceEstimate() <= Role.maxof/2u;
+. }
 
 u Bool shouldImport(Atom atom) {
 .   return true
 .      && atom is Res
 .      && (mEnergy < mEnergy.maxof  // ..and either I can use it, or the cell
-.       || getVolumeEstimate() < cCELL_TARGET_VOLUME  // could stand to be bigger
+.       || getVolumeEstimate() <= 3u*cCELL_TARGET_VOLUME/2u  // isn't already too huge
 .         )
 .   ;
 . }
@@ -74,29 +82,11 @@ u Bool shouldExport(Atom atom) {
 .   return
 .       atom is DReg  // We don't want DReg in here AT ALL
 .    || (atom is Res  // But we like Res.  Only eject it if
-.     && !mServing    // I'm not in the administration, and
-.     && mEnergy == mEnergy.maxof   // I don't need it, and the cell
-.     && getVolumeEstimate() > cCELL_TARGET_VOLUME  // doesn't need to be bigger
+.     && mEnergy == mEnergy.maxof   // I don't need it, and the cell really
+.     && getVolumeEstimate() > 3u*cCELL_TARGET_VOLUME/2u  // doesn't need to be bigger
 .       )
 .   ;
 . }
-
-u Unsigned getNgbDirIndex(C2D ngb) {
-.    EventWindow ew;
-.    SiteNum sn = ew.getSiteNumber(ngb);
-.    return sn-1u;
-. }
-
-u Unsigned getWestIndex() {
-.    C2D c(-1,0);
-.    return getNgbDirIndex(c);
-. }
-
-u Unsigned getNorthIndex() {
-.    C2D c(0,-1);
-.    return getNgbDirIndex(c);
-. }
-
 
 == Rules (Fatal conditions)
 given @ isa HardCyt :
@@ -108,11 +98,27 @@ change @ isa QCyt { $self.mDie = true; }
   @ -> @
 
 == Postrules (Leader movement)
-given @ isa HardCyt : $self.mRole == $self.mRole.maxof
+given @ isa HardCyt : $self.mRole == Role.maxof
 given S isa Swapon
 given h isa HardCyt
 
  hS@ -> @_h
+
+== Postrules (Leader wander)
+
+given @ isa HardCyt {
+.  if ($self.mRole != Role.maxof) return false;
+.  if ($self.getWestIndex() != 0u) return false; // Heading east for test!
+.  if (!random.oneIn(100)) return false;
+.  for (Int i = 0; i < 4; ++i)
+.    if ($self.mDistances[i] < 2u) return false;
+.  return true;
+. }
+
+given h isa HardCyt
+change S isa Swapon
+
+ @_h -> .S.
 
 == Postrules (Update distance estimates)
 
@@ -144,21 +150,18 @@ check @ {
 == Postrules (If not me then who)
 
 given @ isa HardCyt :
-.  $self.mRole != Role.maxof &&                        // Not already the leader, not
-.  !$self.mServing &&                                  // in the chain of command leader, but
+.  !$self.mServing &&                                  // If not serving, but
 .  $self.getWidthEstimate() >= cCORPORATE_DIAMETER &&  // the world is
 .  $self.getHeightEstimate() >= cCORPORATE_DIAMETER && // big enough and we seem
 .  $self.getPositionEstimate().isOrigin()              // to be dead center of it
 
 change @ isa HardCyt {
-.  ++$self.mRole;                    // I'm more important here than I thought
+.  $self.mRole += 2u;                // I'm more important here than I thought
 .  if ($self.mRole == Role.maxof)    // In fact, I say I'm now
 .    $self.mServing = true;          // serving as the leader of us all
 . }
 
-given h isa HardCyt :
-.  $self.mRole != Role.maxof &&
-.  !$self.mServing
+given h isa HardCyt : !$self.mServing  // If nobody around me is serving
 
   h.h.h      .....
   .....      .....
@@ -170,8 +173,7 @@ given h isa HardCyt :
 
 scratch 0 = 0       // To max over ngb roles
 
-given @ isa HardCyt :
-.  $self.mRole != Role.maxof                           // Not already the leader, but
+given @ isa HardCyt : !$self.mServing || $self.mRole != Role.maxof   // Not serving, or not leader
 
 vote h isa HardCyt {
 .  if (!$self.mServing) return 0u;
@@ -181,13 +183,8 @@ vote h isa HardCyt {
 
 check @ {
 .  HardCyt & hc = (HardCyt&) ew[0];
-.  if ($h.$nvotes > 0u) {
-.    hc.mRole = (Role) ($0 - 1);  // Saturating at 0u below
-.    hc.mServing = (hc.mRole > 0u);
-.  } else {                // If nobody to serve
-.    hc.mRole = 0u;        // then I have no role
-.    hc.mServing = false;  // and I'm not serving
-.  }
+.  hc.mRole = (Role) ($0 - 1);     // Saturating at 0u below
+.  hc.mServing = (hc.mRole > 0u);  // No role, not serving
 .  return false;  // Drive-by update
 . }
 
@@ -200,7 +197,9 @@ check @ {
 
 == Postrules (Growth)
 
-given @ isa HardCyt : $self.mEnergy == $self.mEnergy.maxof
+given @ isa HardCyt :
+.    $self.mEnergy == $self.mEnergy.maxof
+. && $self.inFreezingRange()
 
 vote e isa Empty
 vote r isa Res
@@ -210,7 +209,7 @@ change @ {
 .     HardCyt & hc = (HardCyt&) ew[0];
 .     hc.mEnergy = 0u;       // Reproduction is tiring to all
 .     HardCyt copy = hc;
-.     --copy.mRole = 0u;     // Copy has to find its own job
+.     --copy.mRole;          // Assume copy is lower rank than parent
 .     ew[$e.$winsn] = copy; 
 .     ew[$r.$winsn] = Empty.instanceof;
 .   }
@@ -242,7 +241,7 @@ change @ {
 == Postrules (Spike and corner melting)
 
 given @ isa HardCyt :
-.    $self.mServing == false
+.    $self.mRole < Role.maxof/2u  // Off in the distance to melt
 . && $self.getVolumeEstimate() > cCELL_TARGET_VOLUME
 
 

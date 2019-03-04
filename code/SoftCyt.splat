@@ -2,8 +2,14 @@
 \symbol SC
 \color #5b5
 \symmetries all
+local typedef Unsigned(2) Mode;
+local constant Mode cRESERVED = 0u;
+local constant Mode cINBOUND = 1u;
+local constant Mode cOUTBOUND = 2u;
+local constant Mode cFREEZE = 3u;
 
 == Data members
+u Mode mState = cINBOUND;
 
 == Methods
 u HardCyt harden() {
@@ -17,18 +23,83 @@ getColor {
 .  if (mDie) return cu.color(0xffffffu); // White for death
 .  ColorUtils.ARGB base = super.getColor($selector);
 .  ColorUtils.ARGB flavor = cu.color(0x55bb55u);
+.  if (mState == cINBOUND) flavor = cu.color(0x00dd00u);
+.  if (mState == cOUTBOUND) flavor = cu.color(0xdd0000u);
+.  if (mState == cFREEZE) flavor = cu.color(0x0000ddu);
 .  return modulate(base,flavor);
 . }
 
-== Postrules (Harden)
+== Postrules (Inbound)
+given @ isa SoftCyt : $self.mState == cINBOUND
+vote h isa HardCyt
+vote H isa HardCyt
+given r : !$curatom is HardCyt
+vote r : !$curatom is QMembrane
+check @ {
+.  if ($H.$nvotes > 0u && $h.$nvotes > 0u) {
+.    HardCyt & h1 = (HardCyt&) ew[$H.$winsn];
+.    HardCyt & h2 = (HardCyt&) ew[$h.$winsn];
+.    if (h1.mRole >= h2.mRole) {
+.      if (h1.mRole == h1.mRole.maxof) {
+.        SoftCyt& sc = (SoftCyt&) $@.$winatom;
+.        sc.mState = cOUTBOUND;
+.      }
+.    }
+.    return true;
+.  }
+.  return false;
+. }
 
-given @ isa SoftCyt // : plus hardening conditions..
-given h isa HardCyt
+   H.h    ...
+   r@. -> @r.    # Drive by
+
+  rH@h    @.r.   # Hop over
+
+
+== Postrules (Outbound)
+given @ isa SoftCyt : $self.mState == cOUTBOUND
+vote h isa HardCyt
+vote H isa HardCyt
+given r : !$curatom is HardCyt
+vote r : !$curatom is QMembrane
+check @ {
+.  if ($H.$nvotes > 0u && $h.$nvotes > 0u) {
+.    HardCyt & h1 = (HardCyt&) ew[$H.$winsn];
+.    HardCyt & h2 = (HardCyt&) ew[$h.$winsn];
+.    Unsigned westIdx = h1.getWestIndex();
+.    if (h1.mDistances[westIdx] <= h2.mDistances[westIdx]) {
+.      if (h1.mDistances[westIdx] == 0u && random.oneIn(3)) {
+.        SoftCyt& sc = (SoftCyt&) $@.$winatom;
+.        sc.mState = cFREEZE;
+.      }
+.    }
+.    return true;
+.  }
+.  return false;
+. }
+
+   H.h    ...
+   r@. -> @r.    # Drive by
+
+  rH@h    @.r.   # Hop over
+
+
+== Postrules (Harden or decay)
+
+given @ isa SoftCyt : $self.mState == cFREEZE
+
+given h isa HardCyt : $self.inFreezingRange()
 change @ isa SoftCyt { ew[0] = $self.harden(); }
 
 #   h@_   -> ._@
 
    h.@   -> ..@
+
+vote X : random.oneIn(1000)
+change R isa Res
+  
+  X@ -> .R
+
 
 == Postrules (Diffuse within matrix)
 

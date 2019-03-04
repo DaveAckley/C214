@@ -17,6 +17,22 @@ getColor {
 .   return cu.color(b,b,b);
 . }
    
+u Unsigned getNgbDirIndex(C2D ngb) {
+.    EventWindow ew;
+.    EventWindow.SiteNum sn = ew.getSiteNumber(ngb);
+.    return sn-1u;
+. }
+
+u Unsigned getWestIndex() {
+.    C2D c(-1,0);
+.    return getNgbDirIndex(c);
+. }
+
+u Unsigned getNorthIndex() {
+.    C2D c(0,-1);
+.    return getNgbDirIndex(c);
+. }
+
 == Prerules (Death propagation)
 given @ isa QCyt : $self.mDie
 
