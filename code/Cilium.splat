@@ -3,6 +3,9 @@
 \color #833
 \symmetries all
 
+== Data members
+u Bool mPullRes = true;
+
 == Rules
 given @ isa Cilium
 
@@ -31,11 +34,28 @@ change d { ew.swap($_.$winsn,$d.$winsn); }
    ooo        ...
    ooo        ...
 
-    @o   ->    ..
-   _do        d..
+    @oo  ->   ...
+   _doo      d...
 
+# Shutdown if isolated
 
-# Pull Res
+given n : !($curatom is OuterMembrane)
+
+      n                .
+      n                .
+      n                .
+      n                .
+  nnnn@nnnn  ->    ...._....
+      n                .
+      n                .
+      n                .
+      n                .
+
+== Rules (Pull res)
+given @ isa Cilium : $self.mPullRes
+
+vote o isa OuterMembrane
+
 vote r isa Res
 change r { ew.swap($_.$winsn,$r.$winsn); }
 
@@ -54,10 +74,32 @@ change r { ew.swap($_.$winsn,$r.$winsn); }
 # Swap Res in if we're too close anyway
 vote R isa Res
 
-  R@o  -> @R.
-
-
-# Diffuse near OM
+  R@o  -> @R.       
+                    
+== Rules (Clear the way)
+given @ isa Cilium : !$self.mPullRes
+                        
+vote e isa Empty        
+vote o isa OuterMembrane
+                        
+vote x : !($curatom is QMembrane)   // But might be Cilium!
+change x { ew.swap($e.$winsn,$x.$winsn); }
+                            
+    e          x     
+    @xoo  ->   ....  
+    e          .     
+                            
+    x           .    
+   e@oo   ->   x...  
+    x           .    
+                     
+   _@oo   ->   @_..
+             
+== Rules (Diffuse near OM)
+given @ isa Cilium
+                    
+vote e isa Empty    
+vote o isa OuterMembrane
 
 vote n : !($curatom is OuterMembrane)
 vote e isa Empty
@@ -70,20 +112,7 @@ change e { ew.swap($e.$winsn,$@.$winsn); }
 
   @enoo  ->  .e...
 
-# Shutdown if isolated
-
-given n : !($curatom is OuterMembrane)
-
-      n                .
-      n                .
-      n                .
-      n                .
-  nnnn@nnnn  ->    ...._....
-      n                .
-      n                .
-      n                .
-      n                .
-
-# Else hodl
+== Rules (Hodl)
+given @ isa Cilium
 
   @ -> .

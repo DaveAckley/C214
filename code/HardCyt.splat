@@ -6,7 +6,8 @@ local constant Unsigned cDISTANCE_BITS = 4u;
 local typedef Unsigned(cDISTANCE_BITS) Distance;
 local constant Unsigned cROLE_BITS = 4u;
 local typedef Unsigned(cROLE_BITS) Role;
-local constant Unsigned cCORPORATE_DIAMETER = 5u;
+local constant Unsigned cCORPORATE_RADIUS = 4u;
+local constant Unsigned cCORPORATE_DIAMETER = 2u * cCORPORATE_RADIUS;
 local typedef EventWindow.SiteNum SiteNum;
 local constant Unsigned cCELL_TARGET_DIAMETER = 7u;
 local constant Unsigned cCELL_TARGET_VOLUME = cCELL_TARGET_DIAMETER * cCELL_TARGET_DIAMETER;
@@ -66,7 +67,7 @@ u Unsigned getOutDistanceEstimate() {
 . }
 
 u Bool inFreezingRange() {
-.   return getOutDistanceEstimate() <= Role.maxof/2u;
+.   return getOutDistanceEstimate() <= cCORPORATE_RADIUS;
 . }
 
 u Bool shouldImport(Atom atom) {
@@ -246,7 +247,7 @@ given @ isa HardCyt :
 
 
 given q isa QMembrane
-check _ : random.oneIn(5)
+check _ : random.oneIn(3)
 
 change @ isa HardCyt {
 . ew[$_.$winsn] = $self.soften();

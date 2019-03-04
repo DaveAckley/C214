@@ -28,12 +28,30 @@ change D { ew.swap($X.$winsn,$D.$winsn); }
 
 # Deploy cilia
 given Z : !($curatom is Cilium || $curatom is QMembrane)
-vote Z isa Res
+vote Z isa Res               
 change Z { ew[$Z.$winsn] = Cilium.instanceof; }
-
-   ZZZ     ...
-   ZZZ@ -> Z...
-   ZZZ     ...
+                             
+   ZZZ     ...               
+   ZZZ@ -> Z...              
+   ZZZ     ...               
+                             
+# Program cilia (drive-by)   
+scratch 0 = -1               
+vote H isa HardCyt {         
+.  if ($self.mRole > $0) $0 = $self.mRole;
+.  return 0u;                
+.}                           
+                             
+  H      .                   
+  Hi@ -> ...                 
+  H      .                   
+                             
+vote M isa Cilium {          
+.  if ($0 >= 0u) $self.mPullRes = $0 < 13;
+.  return 0u;
+.}               
+                 
+    @MMM -> ....
 
 
 # Import/export

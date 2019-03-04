@@ -51,10 +51,17 @@ check @ {
 . }
 
    H.h    ...
-   r@. -> @r.    # Drive by
+   r@. -> @r.    # Drive by 1
+
+   H.h    ...
+   .r@ -> .@r    # Drive by 2
 
   rH@h    @.r.   # Hop over
 
+   H.h    ...
+     r      @
+     @ ->   r    # Get off dime
+   
 
 == Postrules (Outbound)
 given @ isa SoftCyt : $self.mState == cOUTBOUND

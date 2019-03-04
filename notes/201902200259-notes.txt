@@ -1,4 +1,4 @@
-{99}  -*- text -*-
+{100}  -*- text -*-
 [0:
 
 Wed Feb 20 03:00:03 2019 OK time for an ALIFE19 paper.  The goal is
@@ -1176,3 +1176,9 @@ but wanted to commit the code associated with the run first.
 
 
 :98]
+[99:
+
+Mon Mar  4 12:44:51 2019 OK, commit ahead of moving the flag.  Making
+some progress but still not moving very far.
+
+:99]
