@@ -1,10 +1,12 @@
-SPLATTR:=/home/ackley/PART4/code/D/SPLAT/blib/script/splattr
-MFZRUN:=/home/ackley/PART4/code/D/MFM/bin/mfzrun
-MFZGEOMETRY:={{1H1}}
-MFZBIGGEOMETRY:={{2H1}}
+SPLATTR:=/data/ackley/PART4/code/D/SPLAT/blib/script/splattr
+MFZRUN:=/data/ackley/PART4/code/D/MFM/bin/mfzrun
+MFZGEOMETRY:={{2H2}}
+MFZBIGGEOMETRY:={{1H1}}
+MFZBIG1GEOMETRY:={{1G1}}
 MFZARGS:=$(MFZGEOMETRY) -n
 MFZARGS_MOVIE_FIXEDAER:=$(MFZGEOMETRY) -n -a 0 -p 30 -e 10
 MFZARGS_MOVIE_ACC:=$(MFZBIGGEOMETRY) -n -a 0 -p 30 -e 0 --accelerate 150 --warpfactor 1
+MFZARGS_BIGMOVIE:=$(MFZBIG1GEOMETRY) -n -a 0 -p 30 -e 5
 DIR:=$(shell pwd)
 DEMO:=$(shell basename "$(DIR)")
 TIMESTAMP:=$(shell date +%Y%m%d-%H%M%S)
@@ -25,6 +27,9 @@ movie:	$(DEMO).mfz
 
 movie2:	$(DEMO).mfz
 	$(MFZRUN) $^ run $(MFZARGS_MOVIE_ACC)
+
+big1movie:	$(DEMO).mfz
+	$(MFZRUN) $^ run $(MFZARGS_BIGMOVIE)
 
 clean:	FORCE
 	rm -rf .gen .splatgen *~ .*~ ../*~
