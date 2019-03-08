@@ -1,0 +1,81 @@
+= element SWorm isa QWorm.  Simple data worm demo
+\symbol SW
+\color #8b8
+\radius 1
+\symmetries none
+local constant Unsigned cLENGTH_BITS = 2u;
+local constant Unsigned cSPEED_BITS = 2u;
+local typedef Unsigned(cLENGTH_BITS) LengthType;
+local typedef Unsigned(cSPEED_BITS) SpeedType;
+
+== Methods
+getColor {
+.  ColorUtils.ARGB base = super.getColor($selector);
+.  ColorUtils.ARGB flavor;
+.  if (mType == QWorm.cHEAD)          flavor = cu.color(0x007700u);
+.  else if (mType == QWorm.cBODY)     flavor = base;
+.  else if (mType == QWorm.cTEMP)     flavor = cu.color(0x000077u);
+.  else /* (mType == QWorm.cTAIL) */  flavor = cu.color(0x770000u);
+.  QContent qc;  // Hmm. Need a QCell base class for EEEEVERYTHING
+.  return qc.modulate(base,flavor);
+. }
+
+== Data members
+u LengthType mLength;
+u SpeedType mSpeed;
+
+== Rule (Head advance)
+
+given e : true                       // Consider dead sites
+vote e isa Empty : ew.isLive($cursn) // But don't vote for them
+check e : true                       // Accept $e.$nvotes == 0
+
+given @ isa SWorm : $self.mType == QWorm.cHEAD && $self.mUpstream != $self.mUpstream.maxof
+check @ {
+.   SWorm & sw = (SWorm &) ew[0];
+.   // Drive-by speed initialization
+.   if (sw.mSpeed == 0u) sw.mSpeed = (SpeedType) random.between(1u,SpeedType.maxof);
+.
+.   // Drive-by suicide check
+.   if ($e.$nvotes == 0u) {          // 0.1% blowup if the head is boxed in
+.     if (random.oddsOf(1,1000)) sw.mUpstream = sw.mUpstream.maxof;
+.   }
+.
+.   // Must match len 0 and thus have no tail, to avoid QWorm sanity checks
+.   if (sw.mLength == 0u) return true;
+.
+.   // Otherwise head is bored unless somewhere to go
+.   return $e.$nvotes > 0u;
+. }
+
+change @ isa SWorm {
+.   // Blow up 'manually' if len == 0, since QWorm doesn't understand length
+.   if ($self.mLength == 0 && $self.mUpstream == $self.mUpstream.maxof) {
+.     ew[0] = Empty.instanceof;
+.   }
+.
+.   // Nothing to do if boxed in
+.   if ($e.$nvotes == 0u) return;  
+.
+.   QWorm.Type toMake;
+.   if ($self.mLength == $self.mLength.maxof) {
+.     if (random.oddsOf($self.mSpeed,2u*$self.mSpeed.maxof)) toMake = QWorm.cTEMP;
+.     else return;
+.   } else {
+.     if ($self.mLength == $self.mLength.minof) toMake = QWorm.cTAIL;
+.     else toMake = QWorm.cBODY;
+.     $self.mLength++;
+.   }
+.   SWorm copy = $self;
+.   copy.mType = toMake;
+.   $self.advanceCopying(QWorm.Ortho)($e.$winsn - 1u), copy);
+. }
+
+   e      .
+  e@e -> .@.
+   e      .
+
+== Postrule (Hodl)
+
+   @ -> @
+   

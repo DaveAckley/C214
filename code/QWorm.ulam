@@ -1,0 +1,123 @@
+/** Base class for a 1D fragile data transport system.  To be subclassed by SPLAT code.
+ */
+quark QWorm : SPLATInstance {
+  typedef Unsigned(2) Ortho; // SN - 1
+  typedef Unsigned(2) Type;
+  constant Type cHEAD = 0u;
+  constant Type cBODY = 1u;
+  constant Type cTEMP = 2u;
+  constant Type cTAIL = 3u;
+
+  EventWindow ew;
+  Fail f;
+  Type mType;
+  Ortho mUpstream;
+  Ortho mDownstream;
+
+  // Our 'rule' is to do 'qworm semantics' on $self.
+  virtual Bool evaluateRuleSets() { return update(); }
+
+  Bool orthoPointsAtMe(Ortho od, Bool imUpstream) {
+    Atom & atom = ew[od + 1u];
+    if (!(atom is Self)) return false;
+    Self & dw = (Self&) atom;
+    if (imUpstream  && od == Ortho.maxof - dw.mUpstream) return true;
+    if (!imUpstream && od == Ortho.maxof - dw.mDownstream) return true;
+    return false;
+  }
+
+  Atom & getOrtho(Ortho od) {
+    return ew[od + 1u];
+  }
+
+  Type swapMeWith(Ortho od) {
+    Atom atom = ew[0];             // Copy of us
+    QWorm & tmp = (QWorm &) atom;  // Ref to copy
+
+    EventWindow.SiteNum sn = od + 1u;
+    ew.swap(0u,sn);
+
+    QWorm & nowThem = (QWorm&) ew[0];
+    QWorm & nowUs = (QWorm&) ew[sn];
+
+    nowUs.mUpstream = nowThem.mUpstream;
+    nowUs.mDownstream = nowThem.mDownstream;
+    nowThem.mUpstream = tmp.mUpstream;
+    nowThem.mDownstream = tmp.mDownstream;
+
+    return nowThem.mType;
+  }
+
+  Bool blowup() {
+    if (mType != cHEAD) return false;  // Worm dies from the head
+    if (mUpstream != mUpstream.maxof) return false; // Head not in blowup mode
+    EventWindow.SiteNum sn = mDownstream + 1u;
+    Atom & atom = ew[sn];
+    if (atom is QWorm) {
+      QWorm & qw = (QWorm&) atom;
+      if (qw.mType == cTAIL) {
+        ew[sn] = Empty.instanceof;  // Tail dies with the head
+      } else {
+        qw.mType = cHEAD;        // You're the head now
+        qw.mUpstream = qw.mUpstream.maxof;  // And you're set to blow
+      }
+    }
+    ew[0] = Empty.instanceof;
+    return true;
+  }
+
+  Void advanceCopying(Ortho od, Self& copythis) {
+
+    if (mType != cHEAD) f.fail();  // Only the head can advance
+    Atom atom = copythis.atomof;   // Copy our concrete instantiation
+    Self& s = (Self&) atom;
+
+    s.mDownstream = mDownstream;  // Our old downstream will be theirs now
+    s.mUpstream = od;             // Their upstream is our destination
+
+    mDownstream = (Ortho) (Ortho.maxof - od);  // Our downstream is the opposite of our destination
+    getOrtho(od) = self.atomof;   // We move
+    ew[0] = atom;                 // They take our place 
+  }
+
+  Bool iDie() {
+    ew[0] = Empty.instanceof;
+    return true;
+  }
+
+  // super class default behavior
+  Bool update() {
+
+    if (blowup()) return true;         // Check for wormageddon
+
+    // Fragile sanity: Everybody but Tail should have downstream pointing at them
+    if (mType != cTAIL && !orthoPointsAtMe(mDownstream, true)) return iDie();
+
+    // Fragile sanity: Everybody but Head should have upstream pointing at them
+    if (mType != cHEAD && !orthoPointsAtMe(mUpstream, false)) return iDie();
+
+    if (mType == cHEAD) return false;  // Head does nothing by default
+
+    // Temp moves downstream until it falls off
+    if (mType == cTEMP) {
+      if (orthoPointsAtMe(mDownstream, true)) swapMeWith(mDownstream);
+      else ew[0] = Empty.instanceof;
+      return true;
+    }
+
+    // Body and Tail move upstream through Temp
+    if (mType == cBODY || mType == cTAIL) {
+      if (!orthoPointsAtMe(mUpstream, false)) return iDie();
+      QWorm & them = (QWorm&) getOrtho(mUpstream);
+      if (them.mType != cTEMP) return false;
+      swapMeWith(mUpstream);
+
+      if (mType == cTAIL) getOrtho(mDownstream) = Empty.instanceof;
+      return true;
+    }
+
+    // Not reached?
+    return false;
+  }
+  
+}
