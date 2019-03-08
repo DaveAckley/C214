@@ -2,29 +2,22 @@
 \symbol IM
 \color #6789ab
 \symmetries all
-local constant Unsigned cGRADIENT_BITS = 6;
-local typedef Unsigned(cGRADIENT_BITS) GradVal;
-local constant Unsigned cLOWPASS_BITS = 4;
-local typedef Unsigned(cLOWPASS_BITS) LowPass;
-local typedef XTimer(3,Unsigned(3).maxof,10u) LonelyTimer;
+local constant Int cTIMER_BITS = 3;
+local typedef Unsigned(cTIMER_BITS) TimerType;
+local typedef XTimer(cTIMER_BITS,TimerType.maxof,8u) LonelyTimer;
 
 == Data members
-u GradVal mGradVal = GradVal.maxof;
-u LowPass mLocalMax; // LowPass.maxof if my gradient exceeds all my neighbors
 u Bool mDie = false;
 u LonelyTimer mTimer;
 
 == Methods
 getColor {
-. if (mDie) return cu.color(0xffffffu); // White for death
-. if (mGradVal == GradVal.maxof) return super.getColor($selector);
-. if (mGradVal == GradVal.minof) return cu.color(0xffff00u);
-. if (mLocalMax == LowPass.maxof) return cu.color(0xccccccu);
-. Unsigned incr = 2u*(GradVal.maxof-mGradVal);
-. ARGB ret = cu.color((ColorUtils.Byte) (0x70+incr),
-.                    (ColorUtils.Byte) (0x89/2),
-.                    (ColorUtils.Byte) (0xab/2));
-. return ret;
+.  if (mDie) return cu.color(0xffffffu); // White for death
+.  return super.getColor($selector);
+.}
+
+u Bool isWorried() {
+.  return mTimer.current() >= TimerType.maxof - 3u; 
 .}
 
 == Prerules (Death)
@@ -38,50 +31,29 @@ check i : true
    iii    ...
 
 
-== Prerules (Manage timer)
+== Prerules (Drive-by timer management)
+scratch 0 = 100
 given @ isa InnerMembrane
-vote i isa InnerMembrane
+vote c {
+.  if ($curatom is QContent) $0 = -1;
+.  else if ($0 >= 0 && $curatom is InnerMembrane) {
+.    InnerMembrane & im = (InnerMembrane&) $curatom;
+.    LonelyTimer.Counter ctr = im.mTimer.current();
+.    if (ctr < $0) $0 = ctr;
+.  }
+.  return 1u;
+.}
 vote q isa QContent
-let c = q|i
 check @ {
 .  InnerMembrane & im = (InnerMembrane&) ew[0];
-.  if ($q.$nvotes > 0u) { im.mTimer.reset(); return false; }
-.  if ($i.$nvotes > 0u) {
-.    InnerMembrane & im2 = (InnerMembrane&) ew[$i.$winsn];
-.    LonelyTimer.Counter ctr = im2.mTimer.current();
-.    if (ctr < im.mTimer.current()) im.mTimer.set(ctr);
-.  }
+.  if ($0 < 0) im.mTimer.reset();
+.  else if ($0 + 1 < im.mTimer.current())
+.    im.mTimer.set((LonelyTimer.Counter) ($0 + 1));
 .  if (im.mTimer.countAlarm()) { im.mDie = true; return true; }
 .  return false;
 . }
 
-   c        .
   ccc      ...
- cc@cc -> .....
+  c@c  ->  ...
   ccc      ...
-   c        .
 
-== Rules (settle)
-scratch 0 = GradVal.maxof + 1
-scratch 1 = -1
-given @ isa InnerMembrane : $self.mGradVal != GradVal.minof
-vote i isa InnerMembrane {
-.  if ($self.mGradVal < $0) $0 = $self.mGradVal;
-.  if ($self.mGradVal > $1) $1 = $self.mGradVal;
-.  return 1u;
-. }
-check @ {
-.  InnerMembrane & im = (InnerMembrane &) ew[0];
-.  Int maxmin = $0 + 1;
-.  if (im.mGradVal >= $1) ++im.mLocalMax;
-.  else im.mLocalMax = LowPass.minof;
-.  if (maxmin < im.mGradVal)
-.    im.mGradVal = (GradVal) maxmin;
-.  else
-.    ++im.mGradVal;
-.  return false;
-. }
-
-    i      .
-   i@i -> ...
-    i      .

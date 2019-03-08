@@ -58,8 +58,12 @@ vote M isa Cilium {
 vote C isa QContent
 
 check m {
-.  if ($C.$nvotes == 0u) return false; // Nobody to ask
 .  Bool m = $m.$winatom is Empty;
+.  if ($C.$nvotes == 0u) {   // No content to ask
+.    InnerMembrane & im = (InnerMembrane&) $i.$winatom;
+.    // Default rule: If IM is worried and we'd eject a non-QC, do it
+.    return im.isWorried() && m && !($x.$winatom is QContent);
+.  }
 .  Bool x = $x.$winatom is Empty;
 .  if (m && x) return false;           // Nothing to do
 .  QContent & qc = (QContent &) ew[$C.$winsn];

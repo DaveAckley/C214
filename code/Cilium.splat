@@ -98,11 +98,10 @@ change x { ew.swap($e.$winsn,$x.$winsn); }
 == Rules (Diffuse near OM)
 given @ isa Cilium
                     
-vote e isa Empty    
 vote o isa OuterMembrane
-
 vote n : !($curatom is OuterMembrane)
-vote e isa Empty
+
+vote e isa Empty    
 change e { ew.swap($e.$winsn,$@.$winsn); }
 
    @     ->  .

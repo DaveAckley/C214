@@ -52,14 +52,16 @@ check @ {
 
    H.h    ...
    r@. -> @r.    # Drive by 1
+   H.h    ...
 
    H.h    ...
    .r@ -> .@r    # Drive by 2
+   H.h    ...
 
   rH@h    @.r.   # Hop over
 
    H.h    ...
-     r      @
+    r      @ 
      @ ->   r    # Get off dime
    
 
@@ -95,13 +97,26 @@ check @ {
 
 given @ isa SoftCyt : $self.mState == cFREEZE
 
+# Harden if sensible
+
 given h isa HardCyt : $self.inFreezingRange()
 change @ isa SoftCyt { ew[0] = $self.harden(); }
 
-#   h@_   -> ._@
-
    h.@   -> ..@
 
+# Stay next to membrane
+
+vote i isa InnerMembrane
+
+   i      .    
+  i@i -> ...
+   i      .
+
+# Diffuse if not
+
+   _@ -> @_
+
+# Maybe decay
 vote X : random.oneIn(1000)
 change R isa Res
   

@@ -6,17 +6,21 @@ local constant Unsigned cDISTANCE_BITS = 4u;
 local typedef Unsigned(cDISTANCE_BITS) Distance;
 local constant Unsigned cROLE_BITS = 4u;
 local typedef Unsigned(cROLE_BITS) Role;
-local constant Unsigned cCORPORATE_RADIUS = 4u;
+local constant Unsigned cCORPORATE_RADIUS = 3u;
 local constant Unsigned cCORPORATE_DIAMETER = 2u * cCORPORATE_RADIUS;
 local typedef EventWindow.SiteNum SiteNum;
 local constant Unsigned cCELL_TARGET_DIAMETER = 7u;
 local constant Unsigned cCELL_TARGET_VOLUME = cCELL_TARGET_DIAMETER * cCELL_TARGET_DIAMETER;
 local constant Unsigned cCELL_TARGET_RADIUS = cCELL_TARGET_DIAMETER / 2u;
+#local typedef C2D C2D2[2];
 
 == Data members
-u Distance mDistances[4];  // WNSE
-u Role mRole = Role.maxof;  // What level I am in the organization (if mServing)
-u Bool mServing = false;  // Whether I'm part of an established chain of command
+u Random random;
+u typedef Distance DistanceArray[4];
+u DistanceArray mDistances;  // WNSE
+u Role mRole = Role.maxof; // What level I am in the organization (if mServing)
+u Bool mServing = false;   // Whether I'm part of an established chain of command
+u QVision mVision;         // What we're all working to accomplish
 
 == Methods
 getColor {
@@ -26,7 +30,7 @@ getColor {
 .  if (mServing) {
 .    if (mRole == mRole.maxof)         flavor = cu.color(0xffff00u);
 .    else if (mRole == mRole.maxof-1u) flavor = cu.color(0xbbbb00u);
-.    else if (mRole == mRole.maxof-2u) flavor = cu.color(0x999900u);
+.    else if (mRole == mRole.maxof-2u) flavor = cu.color(0x997722u);
 .  }
 .  return modulate(base,flavor);
 . }
@@ -44,21 +48,45 @@ u SoftCyt soften() {
 . }
 
 u Unsigned getWidthEstimate() {
-.   return (1u + mDistances[0] + mDistances[3]); // us+W+E
+.   return mDistances[0] + mDistances[3]; // W+E
 . }
 
 u Unsigned getHeightEstimate() {
-.   return (1u + mDistances[1] + mDistances[2]); // us+N+S
+.   return mDistances[1] + mDistances[2]; // N+S
 . }
 
 u Unsigned getVolumeEstimate() {
-.   return getWidthEstimate() * getHeightEstimate();
+.   // +1s to get cardinality on each dimension
+.   return (getWidthEstimate() + 1u) * (getHeightEstimate() + 1u);
+. }
+
+u C2D getBBoxDiametersEstimate() {
+.  C2D ret((C2D.Coord) getWidthEstimate(),(C2D.Coord) getHeightEstimate());
+.  return ret;
 . }
 
 u C2D getPositionEstimate() {
 .   C2D pos;
 .   pos.set((Int) mDistances[3] - mDistances[0],(Int) mDistances[2] - mDistances[1]);
 .   return pos;
+. }
+
+u Unsigned permilToSoften() { // Chances out of 1000
+.   QHeading dir;
+.   if (!mVision.getHeading(dir)) return 0u;
+.   C2D bbox = getBBoxDiametersEstimate();
+.   if (bbox.length() < cCORPORATE_DIAMETER) return 0u;
+.   typedef C2D C2D2[2];
+.   C2D r0, r1;
+.   dir.getTargetCell(bbox,r0,r1);
+.   C2D pos = getPositionEstimate();
+.   pos -= r1; // Map to target shape origin
+.   if (r0.contains(pos)) return 0u;
+.   return 10u;
+. }
+
+u Bool siteShouldSoften() {
+.   return random.oddsOf(permilToSoften(), 1000u);
 . }
 
 u Unsigned getOutDistanceEstimate() {
@@ -98,6 +126,16 @@ change @ isa QCyt { $self.mDie = true; }
 
   @ -> @
 
+== Postrules (Leader vision)
+given @ isa HardCyt : $self.mRole == Role.maxof && random.oneIn(1000u)
+change @ isa HardCyt {
+.  QHeading qh;
+.  qh.randomize();
+.  $self.mVision.envisionMovement(qh);
+.}
+
+ @ -> @
+
 == Postrules (Leader movement)
 given @ isa HardCyt : $self.mRole == Role.maxof
 given S isa Swapon
@@ -105,14 +143,14 @@ given h isa HardCyt
 
  hS@ -> @_h
 
-== Postrules (Leader wander)
+== Postrules (Leader recentering)
 
 given @ isa HardCyt {
 .  if ($self.mRole != Role.maxof) return false;
-.  if ($self.getWestIndex() != 0u) return false; // Heading east for test!
+.  Unsigned westIdx = $self.getWestIndex();
+.  Unsigned eastIdx = 3u - westIdx;
+.  if ($self.mDistances[eastIdx] <= $self.mDistances[westIdx]) return false;
 .  if (!random.oneIn(100)) return false;
-.  for (Int i = 0; i < 4; ++i)
-.    if ($self.mDistances[i] < 2u) return false;
 .  return true;
 . }
 
@@ -154,10 +192,10 @@ given @ isa HardCyt :
 .  !$self.mServing &&                                  // If not serving, but
 .  $self.getWidthEstimate() >= cCORPORATE_DIAMETER &&  // the world is
 .  $self.getHeightEstimate() >= cCORPORATE_DIAMETER && // big enough and we seem
-.  $self.getPositionEstimate().isOrigin()              // to be dead center of it
+.  $self.getPositionEstimate().length() < 2u  // very nearly the center of things
 
 change @ isa HardCyt {
-.  $self.mRole += 2u;                // I'm more important here than I thought
+.  ++$self.mRole;                    // I'm more important here than I thought
 .  if ($self.mRole == Role.maxof)    // In fact, I say I'm now
 .    $self.mServing = true;          // serving as the leader of us all
 . }
@@ -172,20 +210,17 @@ given h isa HardCyt : !$self.mServing  // If nobody around me is serving
 
 == Postrules (C-suite management)
 
-scratch 0 = 0       // To max over ngb roles
-
 given @ isa HardCyt : !$self.mServing || $self.mRole != Role.maxof   // Not serving, or not leader
 
-vote h isa HardCyt {
-.  if (!$self.mServing) return 0u;
-.  if ($self.mRole > $0) $0 = $self.mRole;  // New front-runner
-.  return 1u;
-. }
+vote max h isa HardCyt { return $self.mServing ? $self.mRole : 0u; }
 
 check @ {
+.  if ($h.$nvotes == 0u) return false;     // Nobody around?
 .  HardCyt & hc = (HardCyt&) ew[0];
-.  hc.mRole = (Role) ($0 - 1);     // Saturating at 0u below
-.  hc.mServing = (hc.mRole > 0u);  // No role, not serving
+.  HardCyt & h2 = (HardCyt&) ew[$h.$winsn];
+.  hc.mRole = (Role) (h2.mRole - 1u);     // Saturating at 0u below
+.  hc.mServing = (hc.mRole > 0u);         // No role, not serving
+.  if (hc.mServing) hc.mVision = h2.mVision; // Share the vision
 .  return false;  // Drive-by update
 . }
 
@@ -211,7 +246,7 @@ change @ {
 .     hc.mEnergy = 0u;       // Reproduction is tiring to all
 .     HardCyt copy = hc;
 .     --copy.mRole;          // Assume copy is lower rank than parent
-.     ew[$e.$winsn] = copy; 
+.     ew[$e.$winsn] = copy;
 .     ew[$r.$winsn] = Empty.instanceof;
 .   }
 . }
@@ -241,13 +276,10 @@ change @ {
 
 == Postrules (Spike and corner melting)
 
-given @ isa HardCyt :
-.    $self.mRole < Role.maxof/2u  // Off in the distance to melt
-. && $self.getVolumeEstimate() > cCELL_TARGET_VOLUME
-
+given @ isa HardCyt : $self.siteShouldSoften()
 
 given q isa QMembrane
-check _ : random.oneIn(3)
+#check _ : random.oneIn(3)  //randomness now in siteShouldSoften
 
 change @ isa HardCyt {
 . ew[$_.$winsn] = $self.soften();
@@ -255,9 +287,9 @@ change @ isa HardCyt {
 .}
 
 
-  qqq    ...
+  qq.    ...
   q@_ -> .@.
-  qqq    ...
+  qq.    ...
 
 
   q__    ...
