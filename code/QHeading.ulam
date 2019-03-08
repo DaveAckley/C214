@@ -1,0 +1,48 @@
+/** A 2 bit direction and 2 bit speed
+ */
+quark QHeading {
+
+  // Data members
+  typedef C2D C2D2[2];
+  typedef Unsigned(2) Speed;
+  typedef Unsigned(2) Dir;
+  constant Dir cDIR2_WEST =  0u;
+  constant Dir cDIR2_NORTH = 1u;
+  constant Dir cDIR2_SOUTH = 2u;
+  constant Dir cDIR2_EAST =  3u;
+  Speed mSpeed = 0u;
+  Dir mDir = 0u;
+
+  Void randomize() {
+    Random r;
+    mSpeed = (Speed) r.between(Speed.minof,Speed.maxof);
+    mDir =   (Dir) r.between(Dir.minof,Dir.maxof);
+  }
+
+  /** Find size and position of cell target shape implied by the current QHeading.
+   * \param bbox - cell bounding box estimate (as returned by getBBoxDiametersEstimate())
+   * \returns
+   *  C2D2[0] - target shape
+   *  C2D2[1] - shape position within bbox
+   */
+  Void getTargetCell(C2D bbox,C2D & r0, C2D & r1) {
+    C2D.Coord s = mSpeed;
+    C2D aspectChange(s,-s);    // Assuming heading east or west
+    if (mDir == cDIR2_NORTH || mDir == cDIR2_SOUTH) {
+      aspectChange.set(-s,s);  // Swap axes
+    }
+
+    C2D shape(8,8);
+    shape += aspectChange;
+    r0 = shape;
+
+    C2D.Coord h = mSpeed/2;
+    C2D offset;
+    if (mDir == cDIR2_WEST) offset.set(-s,-h);
+    else if (mDir == cDIR2_NORTH) offset.set(h,-s);
+    else if (mDir == cDIR2_SOUTH) offset.set(h,s);
+    else /*(mDir == cDIR2_EAST)*/ offset.set(s,-h);
+    r1 = offset;
+  }
+} // quark QHeading
+

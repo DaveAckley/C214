@@ -1,0 +1,26 @@
+union QVisionUnion {
+  QHeading uHeading;
+}
+
+quark QVision {
+  typedef Unsigned(2) Tag;
+  constant Tag cLETS_MOVE = 0u;
+  constant Tag cLETS_RSV1 = 1u;
+  constant Tag cLETS_RSV2 = 2u;
+  constant Tag cLETS_RSV3 = 3u;
+  Tag mTag;
+  QVisionUnion mUnion;
+
+  Bool getHeading(QHeading & out) {
+    if (mTag != cLETS_MOVE) return false;
+    out = mUnion.uHeading;
+    return true;
+  }
+
+  Void envisionMovement(constant QHeading h) {
+    mTag = cLETS_MOVE;
+    mUnion.uHeading = h;
+  }
+  
+}
+
