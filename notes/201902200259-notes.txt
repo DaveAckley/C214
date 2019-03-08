@@ -1,4 +1,4 @@
-{100}  -*- text -*-
+{163}  -*- text -*-
 [0:
 
 Wed Feb 20 03:00:03 2019 OK time for an ALIFE19 paper.  The goal is
@@ -916,7 +916,7 @@ TODO:
 DONE :78] - Add an Unsigned(2) mRole to HC.  0 == visitor, 1 == employee, 2 ==
    vice president, 3 == president.
 
-[79: Fri Mar  1 03:11:33 2019 
+[79: Fri Mar  1 03:11:33 2019
 DONE :79] - Get a centrally-located HC to declare itself P once the X and Y
    diameters reach say 5 and there's no other P around
 
@@ -938,7 +938,7 @@ DONE :80] - Have getColor identify the 'C-suite' occupants
 
  - Have OM measure and store exterior density excluding Res.  Store it
    in five bits?  Have the density denominator be not the event window
-   size but only the stuff outside the OM?  Can we do that?  
+   size but only the stuff outside the OM?  Can we do that?
 
  - Have IM average the exterior density of its local OM.  Store it in
    five bits too?
@@ -1055,9 +1055,9 @@ DONE - Decide if we're closing the loop 'materially' or only
    closure, since it doesn't make any distinction between types of
    material (other than DReg itself).
 
-   Let's at least start with energetic closure.  
+   Let's at least start with energetic closure.
 
-[89: Sat Mar  2 01:02:50 2019 
+[89: Sat Mar  2 01:02:50 2019
 DONE :89] - Make an Unary(2) mEnergy for QCyt.  Have a high-level rule that
    consumes Res with mEnergy < mEnergy.maxof.
 
@@ -1182,3 +1182,752 @@ Mon Mar  4 12:44:51 2019 OK, commit ahead of moving the flag.  Making
 some progress but still not moving very far.
 
 :99]
+[100:
+
+Mon Mar  4 13:48:38 2019 Back.  Starting up a run on the 'big machine'.
+
+:100]
+[101:
+
+Tue Mar  5 15:10:16 2019 OK, post T2sday Update #221, and we have the
+one week extension to Friday March 15.
+
+So that means there are two immediate things
+
+TODO:
+
+(1) We really need to frame up the paper now:
+    - Clear out last year's gunk
+[104: Tue Mar  5 16:21:38 2019
+DONE :104]    - Make up some phony section heading
+[105: Tue Mar  5 16:21:46 2019
+DONE :105]    - Spitball some titles and abstract/intro sentences
+
+(2) We can take a run at getting these cells to move better, in the
+    DReg/Res soup, by
+
+    - having the core modulate cell aspect ratio based on direction,
+      rather than just fixed distances
+    - making the cilia smart enough to 'flow' the soup around the
+      cell, rather than just pushing it away.
+
+:101][102:
+
+Tue Mar  5 15:15:01 2019 Titlestorm:
+
+Movable protocell computation in a corrosive environment
+Metabolism and mobility: A digital protocell in the Movable Feast Machine
+A Movable Feast: Mobility and metabolism in a dangerous environment
+A Movable Feast: Mobility and metabolism in a corrosive digital environment
+A Movable Feast: Mobility and metabolism in a digital environment
+A Movable Feast: Robust mobility and metabolism in a digital protocell
+
+:102][103:
+
+Tue Mar  5 15:35:14 2019 Abstrabstracts
+
+Hearing yourself think.
+A 'quiet' computational environment
+Computation benefits from a quiet
+
+Reality is a blooming and buzzing confusion.
+Computations make decisions based on inputs, and to do that job
+reliably, the 'internal noise' of the computational machinery needs to
+be managed effectively.
+[119:
+
+Wed Mar  6 02:38:50 2019 The interior of a cell, and its immediate
+environment, forms a distributed computation rich with a complexity of
+tasks and rife with implementation opportunities.[142:
+
+Wed Mar  6 16:06:18 2019 Traditional computation has revolutionized
+society many times over, but now it is increasingly unscalable and,
+already, dangerously unsecurable.. etc etc..  In keeping with the
+theme of this conference "How can Artificial Life help to solve
+Societal Challenges?"
+
+:142]
+
+:119]
+:103]
+[106:
+
+Tue Mar  5 16:22:06 2019 So, how are we going to program Cilium?  For
+flow, could we say like clockwise or counterclockwise relative to OM?
+So 'pushing direction' could be IN, OUT, CLOCKWISE, ANTICLOCKWISE,
+NONE, or something like that?
+[107:
+
+Tue Mar  5 17:03:57 2019 (Just started a 'Doctor it hurts when I do
+this' 3-up T2 case print job.  We shall see.)
+
+:107]
+:106]
+[108:
+
+Tue Mar  5 17:06:32 2019 Aaaand how would we implement this clockwise
+and anticlockwise business?  Two parts to it:
+
+ - How does OM decide what is desirable based on the local QC?
+
+ - How does Cilium decide which way to push?
+
+[109:
+
+Tue Mar  5 17:08:56 2019 Now that second point seems easier, or at
+least more local: You'd think, if you just keep the OM, say, below
+you, then CW is east and CCW is west.  But we'd have to allow only the
+rotational symmetries for that to work.
+
+We kind of liked the getWestIndex/getNorthIndex approach that now
+lives in QCyt.  Could we use that to produce reasonably transparent
+code to answer the question: Given symmetries and my programming, is
+west (in rule space) a good direction to push stuff?
+[110:
+
+Tue Mar  5 17:19:50 2019 Seems like we'd just like to call
+isFlipped().  If we're not flipped, OM below -> W is CCW, and if we
+are flipped, OM below -> W is CW.  So if isFlipped() == (dir == CW),
+then west is a good direction to push stuff, no?  [111:
+
+Tue Mar  5 17:24:30 2019 Well if that's transparent I must be blind..
+I guess I have to do cases..
+
+
+         1           1-4 : Locations of Cilium
+
+       OOOOO           * : Core/heading direction
+      OaaaaaO
+   3  O    *O  4       a : HC announcing anticlockwise
+      OcccccO          c : HC announcing clockwise
+       OOOOO
+
+         2
+
+
+So, * decides on -- let us say -- an orthogonal direction DIR.  Now,
+as in src/core, Dirs.h, we can get the CWDir with (DIR+1)%DIR_COUNT
+and the CCWDir with (DIR+DIR_COUNT-1)%DIR_COUNT
+
+And we can get the offsets associated with those directions as in (the
+original minimal) FillDir(SPoint &, Dir).  [112:
+
+Tue Mar  5 18:09:23 2019 Hmm.  That whole development was leading to
+saying HC on _this_ side of CORE say FOO and on _that_ side say
+BAR.. ..but we don't know which side of CORE we're on.  That was the
+big 'clever' trick -- that we only needed a 'leader Z' (implemented as
+mRole) -- and not an X and Y.
+
+So I guess CORE just announces the direction of travel -- perhaps even
+2xUnsigned(3) for speed and direction -- and all the HC copy it.  We
+don't need UMod or count to infinity because we just trust
+management.  So each HC knows the dir, and each HC knows its own
+position in the cell, so it can figure out what to present to OM.
+Somehow..
+[113:
+
+Wed Mar  6 00:09:30 2019 And SC can head in the given dir.  It's like
+it's too easy if everybody knows the direction.  "It's a trap!" says
+Admiral Ackbar.  And, well, we're just going to have to be Bond James
+Bond about that.
+
+So let's figure out a way to be clean about all this, and then get
+right on that.
+
+Things to modulate based on heading:
+
+ - Cilium push behavior
+
+ - Desired cell aspect ratio
+
+ - Desired absolute cell dimensions
+
+ - HC -> SC and SC -> HC conditions
+
+So, we really want to be able to express things -- at least things
+like the aspect ratio -- in terms of the heading direction.  Because
+like all diagonal heading directions would end up wanting the same,
+square, aspect ratio..
+
+Or just own it: Only do the orthgonal directions, using say
+2xUnsigned(2).  Only four bits cheap cheap!
+
+The speed could go directly to the 'orthogonal narrowing'.  At speed
+zero we want our desired radius to be equal in X and Y -- producing
+square aspect ratio.  At speed one, we want the heading radius to be
++1 and the orthogonal radius to be -1 relative to the square case.  At
+speed N, aspect ratio is (BASE+N,BASE-N) in (heading axis,orthogonal
+axis) units.
+
+Now, that doesn't produce constant area.[114:
+
+Wed Mar  6 01:26:33 2019 In fact the area declines by 4*N**2 regardless
+of BASE (treating BASE as a diameter, not a radius though).  So maybe
+that's tolerable -- maybe we're thinking you probably ought to have
+N**2 SC in flight while you're moving at speed N anyway.
+
+But if BASE is a diameter, how do we allocate BASE-1 above and below
+the 0?  But, wait, there is no zero here, there's just our four
+distances which implies a width and a height and our position within
+that.
+
+(Do not try to split the zero, that's impossible.  Instead, only try
+to realize the truth: There is no zero.)
+
+[115:
+
+Wed Mar  6 01:41:34 2019 So, I'm imagining BASE==8 is where we want to
+be, with a nice plump resting area of 8*8 == 64, narrowing to 11*5 ==
+55 at max speed == 3.[116:
+
+Wed Mar  6 01:54:14 2019 Now, before we get much further, I want to
+revisit the '1u +'s in getWidthEstimate and getHeightEstimate.
+
+Do we really not count ourselves when we're doing
+updateDistanceEstimates?  How does that actually work?[117:
+
+Wed Mar  6 02:05:13 2019 Well, we look at the HC west of us in rule
+space.  In the default (000L) symmetry, we set our west distance to be
+one more than theirs and set our north distance to equal theirs.
+Unless we see QMembrane there instead in which case we set our west
+distance to 0.
+                 ANCHOR INFORMATION      DERIVED INFORMATION
+                     w   n   s   e           w   n   s   e    w+e  s+n
+                 a   0   0               a   0   0   1   2     2    1
+     a  b  c     b       0               b   1   0   1   1     2    1
+                 c       0       0       c   2   0   1   0     2    1
+     d  e  f     d   0       0           d   0   1   0   2     2    1
+                 e           0           e   1   1   0   1     2    1
+                 f           0   0       f   2   1   0   0     2    1
+
+and so okay, 1u+ indeed, w+e+1 == 3 for everybody and n+s+1 == 2 for
+everbody, as it should be.
+
+:117]
+
+:116]
+
+:115]
+
+:114]
+
+:113]
+:112]
+
+
+:111]
+
+:110]
+
+:109]
+
+:108]
+[118:
+
+Wed Mar  6 02:15:14 2019 So okay.  Everybody knows the(ir estimate of
+the) current cell size.  We will distribute speed and direction.  With
+some manipulation to be named later, an HC determines if it's in or
+out of the currently desired aspect ratio.  ..And that's where 'the
+zero', or something like it, comes right back in.  Presumably we were
+imagining that aspect changes would be roughly balanced around the
+center of the cell, rather than all happening at whatever are
+nominally called the 'large' ends of the x and y axes.
+
+So we cut half the rows from the small and and half the rows from the
+large end of the axis.. and just accept that the extra row will come
+from the large end?  That's kind of ucky.  Could we go stochasto if
+there's an odd row, and let HC at both extremes melt 50% of the
+chances?  That will tend to favor melting both sides, since the
+bounding box tends to go to the max..?  But wait -- as the box becomes
+non-rectangular due to irregular melting, the distance estimates will
+start to become unstable as well, so that later HC decisions will be
+more likely to see distances saying that there is no need to cut
+another row..
+
+So maybe odd-row stochasto is the way to go?  We're going to be
+somewhat stochasto even on full row eliminations, because that's just
+what we do, so maybe we can avoid a special case.
+
+[120:
+
+Wed Mar  6 03:34:03 2019 So are we getting at all close to
+implementation opportunities here?
+
+TODO:
+
+[121: Wed Mar  6 04:17:36 2019 First cut
+DONE :121] - Make QHeading.splat (.ulam?) for speed and dir and to hide dir
+   mapping crap
+
+[122: Wed Mar  6 04:17:43 2019 ditto
+DONE :122] - Make QVision.ulam for stuff to be shared down the hierarchy.
+   Perhaps have it contain a tagged union?  So movement is just one
+   possible vision.
+
+[123: Wed Mar  6 04:17:50 2019 ditto
+DONE:123] - Put a QHeading in the QVision union and add a tag for it
+
+[124: Wed Mar  6 04:17:57 2019 ditto
+DONE :124] - Put a QVision in HC.
+
+[138: Wed Mar  6 16:00:29 2019
+DONE :138] - Share the vision following the role hierarchy
+
+[139: Wed Mar  6 16:00:36 2019 Well, technically,
+DONE :139] - Have the leader rarely change the vision to movement with random
+   direction and speed.
+
+[140: Wed Mar  6 16:01:16 2019 What happens is the new vision
+propagates _very_ rapidly, and then nothing else happens.  But:
+DONE :140] - See what happens.
+
+:120]
+
+:118]
+[125:
+
+Wed Mar  6 04:18:08 2019 So with this motion scheme do we still move
+the core or not?  Well, I guess we have to, otherwise eventually it'll
+fall out of the aspect ratio and need to melt.  And we cannot have the
+leader melt.
+
+So the leader moves mainly to keep itself safely in the core of the
+matrix.  And maybe it doesn't lead by doing anymore, since it's
+announcing its visions to all.  So does it just try to stay in the
+middle of everything, and screw being at the leading edge?  If so,
+maybe we just accept a swap if the westIndex distance is greater than
+the opposite.  (How do we get the 'opposite index'?  3u-idx I guess.)
+
+:125]
+[126:
+
+Wed Mar  6 04:41:46 2019 What about a modifier on SPLAT 'vote' that
+means do a max over the site voting, instead of proportional?  I've
+wanted that many times, and it seems reasonably both clear and
+doable.  We could say that a 0u vote continues to be a veto for that
+site, but all votes > 0u are compared for max and only sites that end
+up with the ultimately max value are eligible to win.  And we pick
+uniformly among ties for max.  And it would probably take at most one
+bit in the implementation.. well, maybe not.  Let's take a look.[127:
+
+Wed Mar  6 04:54:12 2019 So yeah, need a few more bits.  Maybe 1+6==7
+bits per keystate, worst case, I guess.  In SPLATKeyState.vote_
+(SPLATInstance.ulam:339), we'd replace like this
+
+    m_numberVotes += (Unsigned) m_voteValue;
+    Random r;
+    if (r.oddsOf(m_voteValue, m_numberVotes)) {
+      m_winnerSN = cursn;          // for now..
+      m_winnerAtom = curatom;      // in the clubhouse..
+    }
+
+with something like this:
+
+    Random r;
+    if (!m_maxVote) {
+      m_numberVotes += (Unsigned) m_voteValue;
+      if (r.oddsOf(m_voteValue, m_numberVotes)) {
+        m_winnerSN = cursn;          // for now..
+        m_winnerAtom = curatom;      // in the clubhouse..
+      }
+    } else {  // max voting
+      if ((Unsigned) m_voteValue > m_numberVotes) {
+        m_numberVotes = (Unsigned) m_voteValue;
+        m_winnerSN = cursn;          // for now..
+        m_winnerAtom = curatom;      // in the clubhouse..
+        m_ties = 0u;
+      } else if ((Unsigned) m_voteValue == m_numberVotes &&
+                 random.oneIn(++m_ties)) {
+        m_winnerSN = cursn;          // for now..
+        m_winnerAtom = curatom;      // in the clubhouse..
+      }
+    }
+
+and we need an extra Bool m_maxVote and an Unsigned(6) m_ties.
+Although m_ties maxes at 41, if all sites are the same keycode and all
+tie, so we could use like Unsigned(6).maxof to mean 'not max voting'
+and get away with 6 bits total.
+
+Then we'd need a way to get the (moral equivalent of) m_maxVote set
+and cleared for the keycodes that do or don't want it, and a syntax to
+express it in SPLAT.
+
+I guess a 'virtual Bool useMaxVoting() ;' would do it, since we do
+have a subclass for each mentioned keycode.  I think.
+
+And, 'vote (max)? keycode ..' seems obvious enough, trading on the
+single char restriction on keycodes.
+
+[128:
+
+Wed Mar  6 05:13:43 2019 OK well it's totally inevitable that I'm
+going to try implementing this.
+
+Here we go.
+
+:128]
+
+:127]
+
+:126]
+[129:
+
+Wed Mar  6 05:33:53 2019 Aaand those measly six bits for m_maxVoteTies
+gets us what?  Of course, this:
+
+    /data/ackley/PART4/code/D/ULAM/bin/../share/ulam/stdlib/ByteStream.ulam:119:1: ERROR: Trying to exceed allotted bit size (8192) for transient SPLATRuleSet_13QMembrane with 8292 bits.
+    ./.splatgen/QMembrane.ulam:1051:11: NOTE: Components of SPLATRuleSet_13QMembrane are..
+    /data/ackley/PART4/code/D/SPLAT/blib/script/../lib/auto/share/dist/App-Splattr/SPLATInstance.ulam:469:11: NOTE: (2340 of 8292 bits, at 0) from superclass: SPLATRuleSet.
+    ./.splatgen/QMembrane.ulam:1052:3: NOTE: (0 of 8292 bits, at 2340) 0Hzy key_Dot.
+    ./.splatgen/QMembrane.ulam:1053:3: NOTE: (0 of 8292 bits, at 2340) 0Hzy key_At.
+    ./.splatgen/QMembrane.ulam:1054:3: NOTE: (0 of 8292 bits, at 2340) 0Hzy key_Underline.
+    ./.splatgen/QMembrane.ulam:1055:3: NOTE: (0 of 8292 bits, at 2340) 0Hzy key_a.
+    ./.splatgen/QMembrane.ulam:1056:3: NOTE: (0 of 8292 bits, at 2340) 0Hzy key_b.
+    ./.splatgen/QMembrane.ulam:1057:3: NOTE: (0 of 8292 bits, at 2340) 0Hzy key_c.
+    ./.splatgen/QMembrane.ulam:1058:3: NOTE: (0 of 8292 bits, at 2340) 0Hzy key_d.
+    ./.splatgen/QMembrane.ulam:1059:3: NOTE: (0 of 8292 bits, at 2340) 0Hzy key_e.
+    ./.splatgen/QMembrane.ulam:1060:3: NOTE: (0 of 8292 bits, at 2340) 0Hzy key_f.
+    ./.splatgen/QMembrane.ulam:1061:3: NOTE: (0 of 8292 bits, at 2340) 0Hzy key_i.
+    ./.splatgen/QMembrane.ulam:1062:3: NOTE: (0 of 8292 bits, at 2340) 0Hzy key_n.
+    ./.splatgen/QMembrane.ulam:1063:3: NOTE: (0 of 8292 bits, at 2340) 0Hzy key_o.
+    ./.splatgen/QMembrane.ulam:1064:3: NOTE: (0 of 8292 bits, at 2340) 0Hzy key_q.
+    ./.splatgen/QMembrane.ulam:1065:3: NOTE: (0 of 8292 bits, at 2340) 0Hzy key_r.
+    ./.splatgen/QMembrane.ulam:1066:3: NOTE: (0 of 8292 bits, at 2340) 0Hzy key_x.
+    ./.splatgen/QMembrane.ulam:1067:3: NOTE: (0 of 8292 bits, at 2340) 0Hzy key_z.
+    ./.splatgen/QMembrane.ulam:1051:11: ERROR: CLASS (regular) 'SPLATRuleSet_13QMembrane' SIZED 8292 FAILED.
+    Unrecoverable Program Type Label FAILURE.
+
+Not sure why everything's hazy considering culam seems to know the
+total, but we get the idea..  We are now precisely 100 bits over --
+although we're not sure how far under we were before..
+
+Bugger.[130:
+
+Wed Mar  6 05:43:39 2019 Could we put the tie storage in the
+subclasses that actually use max voting?  Of which there are none at
+present?  And just have another virtual function or two protruding up
+into SPLATKeyState, costing us zero bits?
+
+Probably.  But need a nap now.
+
+:130]
+
+
+:129]
+[131:
+
+Wed Mar  6 10:01:48 2019 OK had a nap.  If we're adding virtual
+function calls to voting do we want to be specific about max voting at
+all, or just dish to a 'mergeVotes' routine that can do what it wishes
+and then returns the number of votes for the site (or etc)?
+
+Seems like you could, for example, make a case for min voting -- the
+smallest non-zero score -- and who knows what else.
+[132:
+
+Wed Mar  6 10:37:17 2019 OK so now we have SPLATKeyState defining
+'virtual Bool mergeSiteVote(SPLATRuleSet & rs)' to do proportional
+voting, and SPLATKeyStateMAX : SPLATKeyState overriding that to do
+proportional voting.[134: Wed Mar  6 12:08:36 2019 Redoing this to
+have 'Bool mergeSiteVoteMax(SPLATRuleSet & rs, EventWindow.SiteNum &
+ties)' in SPLATKeyState, for 'max-y subclasses' to call and provide
+with storage.. :134]
+
+And we're no longer blowing out our transient bit budget -- but then,
+nobody is using max voting yet.  So, is the syntax indeed:
+
+    vote max k [WHATEVER]
+
+vs
+
+    vote k [WHATEVER]
+
+?
+
+
+:132]
+:131]
+[133:
+
+Wed Mar  6 11:58:27 2019 Urgh, tracing through where we need codegen
+changes for 'vote max', the grossest issue so far is the special key
+codes, which already have their own keystate subclasses:
+
+        my %baseClassForSpecialKeyCodes = (
+            "_" => "SPLATKeyStateEmpty",
+            "@" => "SPLATKeyStateSelf",
+    #        "=" => "SPLATKeyStateSelfType",
+            "." => "SPLATKeyStateAny",
+            "?" => "SPLATKeyStateOccupied",
+            );
+
+and would/will now to have that cross-producted with max voting.
+'SPLATKeyStateEmptyMax', and so forth.
+
+Urgh.  And how do we avoid duplicating guts in SPLATKeyStateEmpty vs
+SPLATKeyStateEmptyMax?  Try to make it a template with a base class
+template argument?  No, we don't have type arguments to templates.
+
+By making SPLATKeyStateEmptyMax be a subclass of SPLATKeyStateEmpty,
+and just adding on the voting override.  I guess we can just define
+all the Max subclasses in SPLATInstance, pay every time for culam to
+look at them, and hope they won't get loaded if nobody uses them.
+
+:133][135:
+
+Wed Mar  6 12:37:34 2019 Well, we've extend the stored override info
+to include a fifth array element:
+
+        $ks->{overrides}->{$VERB} = [$delim, $OPTISA, $EQUALS_BODY,$self->{sourceLine},$voteMax];
+
+where $voteMax is undef in the proportional case and 1 if 'vote max'
+was seen.  (At present the max modifier can be used only when
+$VERB=='vote').  Now it's up to (the appropriate) everybody to look at
+that (at appropriate times).
+
+:135]
+[136:
+
+Wed Mar  6 13:54:17 2019 OK so max voting appears to be working.  It
+looks reasonably nifty, too:
+
+    vote max h isa HardCyt { return $self.mServing ? $self.mRole : 0u; }
+
+then
+
+    check @ {
+    .  HardCyt & hc = (HardCyt&) ew[0];
+    .  hc.mRole = (Role) ($h.$nvotes - 1u);    // Saturating at 0u below
+    .  hc.mServing = (hc.mRole > 0u);          // No role, not serving
+    .  return false;  // Drive-by update
+    . }
+
+with $h.$nvotes becoming the max value found or 0u if none.
+
+I wanted to do like
+
+    vote max h isa HardCyt : $self.mServing ? $self.mRole : 0u
+
+or
+    vote max h isa HardCyt = $self.mServing ? $self.mRole : 0u
+
+but neither of them work.  The ':' introduces a boolean expression, so
+the would-be max values get normalized to 0u/1u.  And the '='
+introduces a key expression so the second example doesn't parse at
+all.
+
+There's just no sigil in SPLAT to introduce an Unsigned or Int or
+general expression.  So be it.
+
+Let's commit this.
+
+:136]
+[137:
+
+Wed Mar  6 15:11:29 2019 OK so let's propagate the vision..
+
+:137]
+[141:
+
+Wed Mar  6 16:01:58 2019 OK, so the vision is propagating and now we
+need the infrastructure for all the aspect ratio and such.
+
+TODO
+
+[153: Thu Mar  7 13:33:53 2019 With some redesign and so far little testing
+DONE  :153] - Make C2D QHeading.getTargetShape() to get the cell's target (W,H)
+   shape as a function of the heading.[143: Wed Mar  6 17:42:49 2019 I
+   think that signature is wrong -- we need to return a Rect, somehow,
+   to express the positioning of the target shape within the cell
+   bounding box.  We should probably pass in the HC's notion of the
+   cell area, and get back a rect expressed relative to that cell
+   area.  But that's going to have to wait until after the evening. :143]
+
+[154: Thu Mar  7 13:34:29 2019 Well, sort of
+DONE :154] - Make  HardCyt.getSiteStability(C2D targetShape) to determine how
+   meltable self is as a function of targetShape and self's
+   mDistances, by centering the shape as much as possible and
+   prorating fractions to both extremes.
+
+[155: Thu Mar  7 13:58:42 2019 Made 'permilToSoften()'
+DONE:155]   = Choose a return type for getSiteStability.  StabilityCode?
+     Unsigned(2): very soft, soft, hard, very hard?  Or: Unsigned(5):
+     Odds exponent for melting?  melt == oneIn(1u<<ret), from ret==0
+     being certainty to ret == 31 being one in four billion?
+
+[156: Thu Mar  7 14:02:51 2019
+DONE :156] - Wrap both of them, plus the ensuing random shot, up into Bool
+   HardCyt.siteShouldSoften()
+
+[157: Thu Mar  7 14:03:05 2019
+DONE :157] - Update the HardCyt.splat:250ff melting rules to use siteShouldSoften
+
+[158: Thu Mar  7 14:03:33 2019 Well, hard to tell what's change, but watched some
+DONE :158] - Get it going and watch it
+
+ - Return here to make to-do for SoftCyt being smarter
+
+:141]
+[144:
+
+Thu Mar  7 00:23:56 2019 So, how do we decide where to position the
+target shape within the bounding box implied by the DistanceArray?
+You'd think the speed should maybe have something to do with that?
+
+But I have to think advancing the target shape by 3 cells for a speed
+of 3 is way too fast -- like the whole cell would melt.  Or would it?
+
+If we anchored the advanced shape to the leading edge of the movement,
+the trailing edge would melt until the bounding box was small enough
+to tuck in in the back of the target shape  -- and melting would stop
+there until there was an advance on the leading edge.
+
+Well I guess we're going to try it.
+
+How about an example first?
+
+QHeading
+  mSpeed == 2
+  mDir   == cDIR2_EAST
+  getShapeOffset() == (2,-2)
+
+HardCyt H
+  mDistances[WNSE] == 0,2,6,9
+  boundingBox == (9,8)
+  shape == (8,8)
+  r[0] = (10,6)
+  r[1] = (2,-1)
+
+          0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16
+
+   0      .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+
+   1      .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+                    >1 >2 >3 >4 >5 >6 >7 >8 >9
+   2      .  .  .  .==.==.==.==.==h==.==.==.==.  .  .  .  .
+                 ^2|                         ||
+   3      .  .  .  .  h  h//h//h//h//h//h//h//.//.//.  .  .
+                 ^1|    //                   ||    //
+   4      .  .  .  H  h  h  h  h  h  h  h  h  .  .  .  .  .
+                 v1|    //                   ||    //
+   5      .  .  .  h  h  h  h  h  h  h  h  h  h  .  .  .  .
+                 v2|    //                   ||    //
+   6      .  .  .  h  h  h  h  h  h  h  h  h  h  .  .  .  .
+                 v3|    //                   ||    //
+   7      .  .  .  h  h  h  h  h  h  h  h  .  .  .  .  .  .
+                 v4|    //                   ||    //
+   8      .  .  .  .  h  h  h  h  h  h  h  .  .  .  .  .  .
+                 v5|    //                   ||    //
+   9      .  .  .  .  h  h//h//h//h//h//h//.//.//.//.  .  .
+                 v6|                         ||
+  10      .  .  .  h--h--h--.--.--h--h--h--.--.  .  .  .  .
+
+  11      .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+
+  12      .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+
+
+:144]
+[145:
+
+Thu Mar  7 01:34:58 2019 So, drawing this example, that +1 in the
+mDistances width and height estimates is a pain in the butt.  It makes
+things come out right for (x = min; x < max; ++x) style iterations,
+but it sure doesn't LOOK like a BOUNDING box..
+
+I guess I could just subtract (1,1) for my purposes.  "As Long As It's
+Clear Why."
+
+[146:
+
+Thu Mar  7 02:04:58 2019 Running out of gas again.  How many places
+are using the WNSE bounding box, currently?
+
+ - HardCyt.getVolumeEstimate() uses it.  And it needs the +1 to
+   include both sides to get the right answer.  So, there.[147:
+
+Thu Mar  7 09:23:00 2019 But getVolumeEstimate could add the (1,1) --
+it has a pretty clear fencepost reason to need to.
+[148:
+
+Thu Mar  7 09:25:16 2019 The underlying getHeightEstimate (and width)
+are used independently in two other places -- both to estimate the
+size of the cell.  (1) Is the cell big enough to have a leader?  and
+(2) Is the cell so big it should explode?
+
+And in both of those places, I'd think, a +1 or not shouldn't be a
+critical difference.  "shouldn't".
+
+Let's switch it over to 'true' bounding box and compensate in
+volume.. [149:
+
+Thu Mar  7 10:12:41 2019 Hmm, C2D.contains() expects a +1 style
+bounding box..[150:
+
+Thu Mar  7 10:21:19 2019 OK, niftyfingers on reddit suggests the
+mnemonic 'cardinality = diameter + 1' which is memorable because
+'cardinality' has five syllables while 'diameter' has four, and
+'5=4+1' is the same pattern as the mnemonic.  So that would say, yes,
+the width and height estimates would not add one, because they are
+diameter-like measurements, while the volume estimate would add the
+ones, because it's cardinality(-squared).  And we keep cardinality vs
+diameter in mind whenever we use the numbers..
+
+:150]
+
+:149]
+
+:148]
+:147]
+
+:146]
+
+  :145]
+[151:
+
+Thu Mar  7 10:26:46 2019 OK, so, back to QHeading.getShapeOffset
+
+:151][152:
+
+Thu Mar  7 13:32:27 2019 Well had some issues trying to return arrays
+of C2Ds, so worked around that at least for now.
+
+:152]
+[159:
+
+Thu Mar  7 14:03:57 2019 OK, how is SoftCyt going to use this new information?
+
+:159][160:
+
+Fri Mar  8 15:08:03 2019 OK, so I took a rather extended break to
+(pick up cheese head screws at Grainger and get information about a
+presentation in May and) develop QWorm.ulam and SWorm.splat.
+
+:160]
+[161:
+
+Fri Mar  8 16:39:34 2019 So just picked up a somewhat subtle bug that
+I only noticed because I was screwing around flooding the whole
+universe with SW, and it seemed the resulting sworms were
+preferentially heading west.
+
+Took screenshots in whole_screen_by_date/20190308
+
+Diagnosis was: The sworms weren't preferentially traveling west, but
+when a SW head with no tail suicided, if there happened to be another
+(even unrelated QW) to its west, the QWorm blowup code 
+mistakenly propagated the blowup to it -- because the SW-with-no-tail
+had its mDownstream initted to 0 == west.
+
+Fix is to blowup 'manually', in the SW code, if our length is still 0.
+Which is kind of gross, but the fundamental blame is that a head
+without a tail is just inconsistent at QW level, so it's SW's job to
+do _something_ about it, since SW created the head-without-tail
+situation to begin with.
+
+:161]
+[162:
+
+Fri Mar  8 16:53:58 2019 Committing this stuff.
+
+:162]
