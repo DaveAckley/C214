@@ -6,6 +6,8 @@ MFZBIG1GEOMETRY:={{1G1}}
 MFZARGS:=$(MFZGEOMETRY) -n
 MFZARGS_MOVIE_FIXEDAER:=$(MFZGEOMETRY) -n -a 0 -p 30 -e 10
 MFZARGS_MOVIE_ACC:=$(MFZBIGGEOMETRY) -n -a 0 -p 30 -e 0 --accelerate 150 --warpfactor 1
+MFZARGS_TILES_MOVIE_ACC:=$(MFZGEOMETRY) -n -a 0 -p 30 -e 0 --accelerate 150 --warpfactor 1
+MFZARGS_TILES_MOVIE_SURGE:=$(MFZGEOMETRY) -n -a 0 -p 30 -e 0 --accelerate 150 --surge 300 --warpfactor 1
 MFZARGS_BIGMOVIE:=$(MFZBIG1GEOMETRY) -n -a 0 -p 30 -e 5
 DIR:=$(shell pwd)
 DEMO:=$(shell basename "$(DIR)")
@@ -27,6 +29,12 @@ movie:	$(DEMO).mfz
 
 movie2:	$(DEMO).mfz
 	$(MFZRUN) $^ run $(MFZARGS_MOVIE_ACC)
+
+tilemovie:	$(DEMO).mfz
+	$(MFZRUN) $^ run $(MFZARGS_TILES_MOVIE_ACC)
+
+tilemoviesurge:	$(DEMO).mfz
+	$(MFZRUN) $^ run $(MFZARGS_TILES_MOVIE_ACC)
 
 big1movie:	$(DEMO).mfz
 	$(MFZRUN) $^ run $(MFZARGS_BIGMOVIE)
