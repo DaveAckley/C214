@@ -9,7 +9,8 @@ local constant Mode cOUTBOUND = 2u;
 local constant Mode cFREEZE = 3u;
 
 == Data members
-u Mode mState = cINBOUND;
+u DebugUtils du;
+u Mode mState = cOUTBOUND;
 
 == Methods
 u HardCyt harden() {
@@ -61,56 +62,63 @@ check @ {
   rH@h    @.r.   # Hop over
 
    H.h    ...
-    r      @ 
+    r      @
      @ ->   r    # Get off dime
-   
+
 
 == Postrules (Outbound)
 given @ isa SoftCyt : $self.mState == cOUTBOUND
-vote h isa HardCyt
-vote H isa HardCyt
-given r : !$curatom is HardCyt
-vote r : !$curatom is QMembrane
-check @ {
-.  if ($H.$nvotes > 0u && $h.$nvotes > 0u) {
-.    HardCyt & h1 = (HardCyt&) ew[$H.$winsn];
-.    HardCyt & h2 = (HardCyt&) ew[$h.$winsn];
-.    Unsigned westIdx = h1.getWestIndex();
-.    if (h1.mDistances[westIdx] <= h2.mDistances[westIdx]) {
-.      if (h1.mDistances[westIdx] == 0u && random.oneIn(3)) {
-.        SoftCyt& sc = (SoftCyt&) $@.$winatom;
-.        sc.mState = cFREEZE;
-.      }
-.    }
-.    return true;
-.  }
-.  return false;
+vote h isa HardCyt : $self.mServing
+vote x : $curatom is Empty || $curatom is QMembrane
+check @ {  // With drive-by updating
+.  if ($h.$nvotes == 0u || $x.$nvotes == 0u) return false;
+.  SoftCyt & sc = (SoftCyt &) ew[0];
+.  HardCyt & hc = (HardCyt&) ew[$h.$winsn];
+.  QHeading head;
+.  if (!hc.mVision.getHeading(head)) return false;
+.  // Get default orientation coord of target site
+.  C2D c = ew.getCoord($x.$winsn);
+.  if (!head.isCoordInDir(c)) return false;
+.  if ($x.$winatom is QMembrane) sc.mState = cFREEZE;
+.  else /* ($x.$winatom is Empty) */ ew.swap(0,$x.$winsn);
+.  return true;
 . }
 
-   H.h    ...
-   r@. -> @r.    # Drive by
+   h      .
+  x@x -> ...
+   h      .
 
-  rH@h    @.r.   # Hop over
+  hxh    ...
+  x@x -> ...
+  hxh    ...
 
 
 == Postrules (Harden or decay)
 
 given @ isa SoftCyt : $self.mState == cFREEZE
 
-# Harden if sensible
+# Harden if we'd be in target
 
-given h isa HardCyt : $self.inFreezingRange()
+given h isa HardCyt : $self.mServing
+check @ {
+.  if ($h.$nvotes == 0u) return false;     // Nobody around?
+.  HardCyt & hc = (HardCyt&) ew[$h.$winsn];
+.  C2D ourpos = -ew.getCoord($h.$winsn); // We are at -pos with respect to their pos
+.  EventWindow.SiteNum sn = ew.getSiteNumber(ourpos);  // Which would be sitenum 'sn'
+.  return hc.siteShouldHarden(sn);                     // with the origin at them
+. }
+
 change @ isa SoftCyt { ew[0] = $self.harden(); }
 
    h.@   -> ..@
 
 # Stay next to membrane
 
-vote i isa InnerMembrane
+# vote i isa InnerMembrane
 
-   i      .    
-  i@i -> ...
-   i      .
+#    i      .
+#   i@i -> ...
+#    i      .
 
 # Diffuse if not
 
@@ -119,7 +127,7 @@ vote i isa InnerMembrane
 # Maybe decay
 vote X : random.oneIn(1000)
 change R isa Res
-  
+
   X@ -> .R
 
 
@@ -144,8 +152,17 @@ change @ { ew.swap(0u,$r.$winsn); }
 
    @hr -> rh@    # Face to face
 
-== Postrules (5% decay, else hold)
+   @rh -> r@h    # Step off
 
-change @ { if (random.oneIn(20)) ew[0] = Res.instanceof; }
+== Postrules (0.1% decay, else hold)
+
+change @ {
+.  if (random.oddsOf(1,1000)) {
+.    DebugUtils du;
+.//    du.printContext();
+.//    du.print("SOFT TISSUE DECAY");
+.    ew[0] = Res.instanceof;
+.  }
+. }
 
    @ -> @
