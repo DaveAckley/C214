@@ -1,4 +1,4 @@
-{163}  -*- text -*-
+{181}  -*- text -*-
 [0:
 
 Wed Feb 20 03:00:03 2019 OK time for an ALIFE19 paper.  The goal is
@@ -1931,3 +1931,183 @@ situation to begin with.
 Fri Mar  8 16:53:58 2019 Committing this stuff.
 
 :162]
+[163:
+
+Fri Mar  8 21:40:31 2019 I think to get the cell target shape into
+some plausible shape, we're going to need some specific
+
+TODO
+
+ - Review the status of the code regarding size, shape, and melting
+   = QHeading.ulam
+[164: Fri Mar  8 22:40:53 2019 start with the easy one
+DONE :164]   = QVision.ulam
+[171: Sat Mar  9 15:04:09 2019 took forever but
+DONE :171]   = HardCyt
+   = SoftCyt
+   = QCyt
+   = (QMembrane?)
+
+[172: Sat Mar  9 15:04:27 2019 
+DONE :172] - Set up a test situation and save it
+
+[173: Sat Mar  9 15:04:45 2019
+DONE :173] - Add debug prints to show the mDistances, the mHeading, and the
+   derived shape and offset.
+
+ - Use the saved test situation plus magic wand events to explore how
+   reasonable the results look.
+
+:163]
+[165:
+
+Sat Mar  9 00:11:02 2019 OK we have yet another foggen
+y-axis-direction issue.  When we are representing our estimated
+position inside the estimated cell bbox, is the origin in the
+southwest with +y going up, or the northwest with +y going down?  We
+can sort of do either locally but we need to pick a lane and stick to
+it because right now HardCyt.getPositionEstimate is returning (0,-4)
+for a lower-left HC, and that helps nobody.
+
+Now, whatever decision we make has to interact with the heading biases
+in QHeading.   Like, if QHeading is going south, does the shape get
+offset by the +y or by -y?  Perhaps that answer could tell us what to
+do here.[166:
+
+Sat Mar  9 00:27:19 2019 I see:
+
+QHeading.ulam:42:    else if (mDir == cDIR2_NORTH) offset.set(h,-s);
+QHeading.ulam:43:    else if (mDir == cDIR2_SOUTH) offset.set(h,s);
+
+where h and s are non-negative.
+
+Now, getTargetCell is handed the estimated bbox, but it currently
+never uses it, which shakes our willingness to go too far following
+that code.  What is it, again, that we want getTargetCell to do?[167:
+
+Sat Mar  9 00:35:16 2019 Well, I thought we wanted it to
+
+(1) Figure out the overall desired shape of the cell, based on
+    'platonic esthetics' and the heading
+
+(2) Figure out how to offset that shape relative to the bbox, so that
+    in the heading dimension it lands 's' steps beyond that bbox wall,
+    while in the orthogonal dimension it divides the bbox extent as
+    evenly as possible.
+
+So I do think step (2) requires us to look at the bbox, at least for
+certain heading directions.  If the bbox origin is SW with +X right
+and +Y up, then when we're heading E or N the offset depends on the
+bbox width or height, respectively.  And the even division depends on
+the bbox size as well.  So, QHeading.getTargetCell is pretty well and
+truly fogged, that's what we would say.[168:
+
+Sat Mar  9 04:25:15 2019 Now I'd thought I worked through this when I
+wrote getTargetCell, and had concluded that the bbox dimensions
+canceled out when one was computing an offset.. but that's not seeming
+right at this point.  Because different headings mean, in effect, that
+you have to 'offset the offset' relative to different sides of the
+bbox, but the final net offset is relative to the SW corner origin.
+
+:168]
+
+:167]
+
+:166]
+
+:165]
+[169:
+
+Sat Mar  9 12:17:00 2019 Well, so've reworked getTargetCell assuming
++y is north, so let's go with that in HardCyt.getPositionEstimate and
+then see where the chips fall.
+
+(There's currently only two uses of getPositionEstimate in *.splat,
+both in HardCyt: (1) The one we're currently concerned with, (2) one
+that immediately takes C2D.length() of the result, so the +y direction
+doesn't matter.  (Because, as Dave Wishnia answered the math teacher
+on that high school day almost half a century ago: 'Subtraction
+commutes inside absolute values.'))
+
+ :169]
+[170:
+
+Sat Mar  9 14:36:42 2019 OK, well HC melting due to out-of-target
+shape conditions is looking more plausible.  Need to turn to SoftCyt
+now.  But trying to start another case print first..  Last time got a
+lovely new abort ERR:PRINT FAN ERROR.
+
+:170]
+[174:
+
+Sat Mar  9 15:05:03 2019 OK SoftCyt review.  Let's start with what we
+currently think we want.  If, considering all its current estimates, a
+HC is outside its target shape, it takes a shot to melt.  We'd like
+the odds of melting to grow rapidly with the distance outside the
+target shape, but we're not doing that yet.  Anyway.
+
+So then we have an SC, initted to state cINBOUND.  Is that what we
+want?  Since we're now broadcasting the corporate vision, do we still
+need to make the pilgrimmage?
+
+An alternative is just to check any nearby HC for the heading, then
+try to do that.  Suppose as a test we init to cOUTBOUND and try to set
+up that behavior?
+
+:174]
+[175:
+
+Sun Mar 10 10:52:47 2019 Well we're still not moving very well --
+although it does appear we're moving somewhat, and under leader
+control -- but we have to rotate towards bulk text generation today. 
+
+:175]
+[176:
+
+Sun Mar 10 14:52:27 2019 OK.
+
+Intro
+Alife for sustainable society
+Argument in a nutshell
+ 0. There's many ways to compute but we fixated on hardware determinism
+ 1. The resulting machines have been revolutionary
+ 2. Their consequences are not all good, but we're not about to give them up
+ 3. Securability is a terrible and increasing problem
+ 4. Computer architecture matters
+ 5. Indefinite scalability
+ 6. Living computation
+ 7. Soft artificial life as the essential architectural of Computing
+    2.0. [178:Sun Mar 10 16:16:47 2019
+
+Then: DReg and Res
+
+ 0. It's easy to say move beyond global hardware determinism but it's
+    not so easy to do.  'Creeping determinism'.
+ 1. Even though all software is in principle 'soft', some engineering
+    decisions are 'harder' than others 
+
+:178]
+[177:
+
+Sun Mar 10 14:58:49 2019 Meeting time.
+
+:177]
+:176]
+[179:
+
+Sun Mar 10 16:56:20 2019 OK results from the fresh part:
+
+ - Time to create QC flag base class and everbody inherit from it.
+
+ - Including QWorm
+
+ - [Make QWorm TEMP processing be virtual so other classes could do
+   custom processing as they move down the worm.]
+
+[180:
+
+Sun Mar 10 17:01:06 2019 But let's commit first.
+
+:180]
+
+:179]
