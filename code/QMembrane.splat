@@ -38,7 +38,7 @@ change Z { ew[$Z.$winsn] = Cilium.instanceof; }
 # Program cilia (drive-by)   
 scratch 0 = -1               
 vote H isa HardCyt {         
-.  if ($self.mRole > $0) $0 = $self.mRole;
+.  if ($self.mServing && $self.mRole > $0) $0 = $self.mRole;
 .  return 0u;                
 .}                           
                              
@@ -47,7 +47,7 @@ vote H isa HardCyt {
   H      .                   
                              
 vote M isa Cilium {          
-.  if ($0 >= 0u) $self.mPullRes = $0 < 13;
+.  $self.mPullRes = $0 < 13;  // Including $0 == -1
 .  return 0u;
 .}               
                  
