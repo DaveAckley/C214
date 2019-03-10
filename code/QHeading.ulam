@@ -4,19 +4,56 @@ quark QHeading {
 
   // Data members
   typedef C2D C2D2[2];
-  typedef Unsigned(2) Speed;
+  typedef Unsigned(1) Speed;
   typedef Unsigned(2) Dir;
   constant Dir cDIR2_WEST =  0u;
   constant Dir cDIR2_NORTH = 1u;
   constant Dir cDIR2_SOUTH = 2u;
   constant Dir cDIR2_EAST =  3u;
-  Speed mSpeed = 0u;
+  Speed mSpeed = Speed.minof;
   Dir mDir = 0u;
 
   Void randomize() {
     Random r;
     mSpeed = (Speed) r.between(Speed.minof,Speed.maxof);
     mDir =   (Dir) r.between(Dir.minof,Dir.maxof);
+  }
+
+  Unsigned isqrt(Unsigned x) { // For small values of x...
+    Unsigned a = 1u;
+    while (a*a <= x) ++a;
+    return a-1u;
+  }
+
+  // Is coord c2d in the given direction relative to us?
+  Bool isCoordInDir(C2D c2d) {
+    DebugUtils du;
+    /*du.print("isCoordInDirXXX");
+    du.print(c2d);
+    du.print(mDir);*/
+    if (mDir == cDIR2_WEST)       { if (c2d.getX() >= 0) return false; }
+    else if (mDir == cDIR2_NORTH) { if (c2d.getY() <= 0) return false; }
+    else if (mDir == cDIR2_SOUTH) { if (c2d.getY() >= 0) return false; }
+    else /* (mDir == cDIR2_EAST)*/{ if (c2d.getX() <= 0) return false; }
+    //du.print("ICIDYES");
+    return true;
+  }
+
+  // Map a sitenumber in the current symmetry to the equivalent sitenumber in 000L
+  C2D sn000L(EventWindow.SiteNum sn) {
+    DebugUtils du;
+    du.print("SN000L");
+    du.print(sn);
+    EventWindow ew;
+    C2D ret = ew.getCoord(sn);  // Under the current symmetry
+    du.print(ret);
+    /*
+    sn = ew.getSiteNumberRaw(ret);
+    du.print(sn);
+    ret = ew.getCoord(sn);
+    du.print(ret);
+    */
+    return ret;
   }
 
   /** Find size and position of cell target shape implied by the current QHeading.
@@ -32,16 +69,25 @@ quark QHeading {
       aspectChange.set(-s,s);  // Swap axes
     }
 
-    C2D shape(8,8);
+    constant C2D.Coord cMIN_SIDE = 5;
+    constant C2D.Coord cMAX_SIDE = 8;
+    C2D.Coord side = (C2D.Coord) isqrt((Unsigned) (bbox.getX() * bbox.getY()));
+    if (side < cMIN_SIDE) side = cMIN_SIDE;       // Min shape
+    else if (side > cMAX_SIDE) side = cMAX_SIDE;  // Max shape
+    C2D shape(side, side);
+    
     shape += aspectChange;
     r0 = shape;
 
-    C2D.Coord h = mSpeed/2;
-    C2D offset;
-    if (mDir == cDIR2_WEST) offset.set(-s,-h);
-    else if (mDir == cDIR2_NORTH) offset.set(h,-s);
-    else if (mDir == cDIR2_SOUTH) offset.set(h,s);
-    else /*(mDir == cDIR2_EAST)*/ offset.set(s,-h);
+    C2D d = bbox - shape;  // + if shape fits in bbox on dim
+    C2D hd;
+    hd.set(d.getX() / 2, d.getY() / 2); // Why, again, does C2D.operator/(Int) not exist?
+
+    C2D offset; // Assuming +x is E and +y is N
+    if (mDir == cDIR2_WEST)       offset.set(-s,         hd.getY());  
+    else if (mDir == cDIR2_NORTH) offset.set(hd.getX(),  d.getY()+s);
+    else if (mDir == cDIR2_SOUTH) offset.set(hd.getX(),  -s);
+    else /*(mDir == cDIR2_EAST)*/ offset.set(d.getX()+s, hd.getY());
     r1 = offset;
   }
 } // quark QHeading
