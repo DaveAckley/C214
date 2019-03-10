@@ -65,28 +65,49 @@ u C2D getBBoxDiametersEstimate() {
 .  return ret;
 . }
 
-u C2D getPositionEstimate() {
+u C2D getPositionEstimate() { // Position relative to implied center
 .   C2D pos;
-.   pos.set((Int) mDistances[3] - mDistances[0],(Int) mDistances[2] - mDistances[1]);
+.   pos.set((Int) mDistances[3] - mDistances[0],  // E is +ive
+.           (Int) mDistances[1] - mDistances[2]); // N is +ive
 .   return pos;
 . }
 
-u Unsigned permilToSoften() { // Chances out of 1000
+u C2D getCoordEstimate() { // Position relative to SW == (0,0)
+.   C2D pos;
+.   pos.set((Int) mDistances[0],(Int) mDistances[2]);
+.   return pos;
+. }
+
+u Bool bboxContains(C2D bbox, C2D coord) { // All sides of bbox are 'in' (unlike C2D.contains(C2D))
+.  if (coord.getX() < 0 || coord.getY() < 0) return false;
+.  if (coord.getX() > bbox.getX() || coord.getY() > bbox.getY()) return false;
+.  return true;
+. }
+
+u Bool isPosInTargetCell(C2D pos, Bool ifNA) {
 .   QHeading dir;
-.   if (!mVision.getHeading(dir)) return 0u;
+.   if (!mVision.getHeading(dir)) return ifNA;
 .   C2D bbox = getBBoxDiametersEstimate();
-.   if (bbox.length() < cCORPORATE_DIAMETER) return 0u;
-.   typedef C2D C2D2[2];
+.   if (bbox.length() < cCORPORATE_DIAMETER) return ifNA;
 .   C2D r0, r1;
 .   dir.getTargetCell(bbox,r0,r1);
-.   C2D pos = getPositionEstimate();
 .   pos -= r1; // Map to target shape origin
-.   if (r0.contains(pos)) return 0u;
-.   return 10u;
+.   return bboxContains(r0,pos);
+. }
+
+u Unsigned permilToSoften() { // Chances out of 1000
+.   return isPosInTargetCell(getCoordEstimate(), true) ? 0u : 100u;
 . }
 
 u Bool siteShouldSoften() {
 .   return random.oddsOf(permilToSoften(), 1000u);
+. }
+
+u Bool siteShouldHarden(EventWindow.SiteNum sn) {
+.   EventWindow ew;
+.   C2D pos = getCoordEstimate();  // Start with where we are
+.   pos += ew.getCoord(sn);        // Add offset to them
+.   return isPosInTargetCell(pos, true);
 . }
 
 u Unsigned getOutDistanceEstimate() {
@@ -95,6 +116,7 @@ u Unsigned getOutDistanceEstimate() {
 . }
 
 u Bool inFreezingRange() {
+.   DebugUtils du;
 .   return getOutDistanceEstimate() <= cCORPORATE_RADIUS;
 . }
 
@@ -127,7 +149,7 @@ change @ isa QCyt { $self.mDie = true; }
   @ -> @
 
 == Postrules (Leader vision)
-given @ isa HardCyt : $self.mRole == Role.maxof && random.oneIn(1000u)
+given @ isa HardCyt : $self.mRole == Role.maxof && $self.mServing && random.oneIn(10000u)
 change @ isa HardCyt {
 .  QHeading qh;
 .  qh.randomize();
@@ -137,7 +159,7 @@ change @ isa HardCyt {
  @ -> @
 
 == Postrules (Leader movement)
-given @ isa HardCyt : $self.mRole == Role.maxof
+given @ isa HardCyt : $self.mRole == Role.maxof  && $self.mServing
 given S isa Swapon
 given h isa HardCyt
 
@@ -146,7 +168,7 @@ given h isa HardCyt
 == Postrules (Leader recentering)
 
 given @ isa HardCyt {
-.  if ($self.mRole != Role.maxof) return false;
+.  if ($self.mRole != Role.maxof || !$self.mServing) return false;
 .  Unsigned westIdx = $self.getWestIndex();
 .  Unsigned eastIdx = 3u - westIdx;
 .  if ($self.mDistances[eastIdx] <= $self.mDistances[westIdx]) return false;
@@ -190,9 +212,8 @@ check @ {
 
 given @ isa HardCyt :
 .  !$self.mServing &&                                  // If not serving, but
-.  $self.getWidthEstimate() >= cCORPORATE_DIAMETER &&  // the world is
-.  $self.getHeightEstimate() >= cCORPORATE_DIAMETER && // big enough and we seem
-.  $self.getPositionEstimate().length() < 2u  // very nearly the center of things
+.  $self.getVolumeEstimate() >= cCELL_TARGET_VOLUME/3u &&  // the world seems big enough and
+.  $self.getPositionEstimate().length() < 2u  // we seem nearly in the center of things
 
 change @ isa HardCyt {
 .  ++$self.mRole;                    // I'm more important here than I thought
@@ -221,6 +242,7 @@ check @ {
 .  hc.mRole = (Role) (h2.mRole - 1u);     // Saturating at 0u below
 .  hc.mServing = (hc.mRole > 0u);         // No role, not serving
 .  if (hc.mServing) hc.mVision = h2.mVision; // Share the vision
+.  else { QHeading stop; hc.mVision.envisionMovement(stop); } // Or don't
 .  return false;  // Drive-by update
 . }
 
@@ -233,22 +255,24 @@ check @ {
 
 == Postrules (Growth)
 
-given @ isa HardCyt :
-.    $self.mEnergy == $self.mEnergy.maxof
-. && $self.inFreezingRange()
+given @ isa HardCyt : $self.mEnergy == $self.mEnergy.maxof
 
 vote e isa Empty
 vote r isa Res
 
+check @ {
+.   if ($e.$nvotes == 0u || $r.$nvotes == 0u) return false;
+.   HardCyt & hc = (HardCyt&) ew[0];
+.   return hc.siteShouldHarden($e.$winsn);
+. }
+
 change @ {
-.   if ($e.$nvotes > 0u && $r.$nvotes > 0u) {
-.     HardCyt & hc = (HardCyt&) ew[0];
-.     hc.mEnergy = 0u;       // Reproduction is tiring to all
-.     HardCyt copy = hc;
-.     --copy.mRole;          // Assume copy is lower rank than parent
-.     ew[$e.$winsn] = copy;
-.     ew[$r.$winsn] = Empty.instanceof;
-.   }
+.   HardCyt & hc = (HardCyt&) ew[0];
+.   hc.mEnergy = 0u;       // Reproduction is tiring to all
+.   HardCyt copy = hc;
+.   --copy.mRole;          // Assume copy is lower rank than parent
+.   ew[$e.$winsn] = copy;
+.   ew[$r.$winsn] = Empty.instanceof;
 . }
 
      e        .
@@ -274,9 +298,9 @@ change @ {
     www      ...
      h        .
 
-== Postrules (Spike and corner melting)
+== Postrules (Edge melting)
 
-given @ isa HardCyt : $self.siteShouldSoften()
+given @ isa HardCyt : $self.mRole != Role.maxof && $self.siteShouldSoften() 
 
 given q isa QMembrane
 #check _ : random.oneIn(3)  //randomness now in siteShouldSoften
@@ -286,16 +310,7 @@ change @ isa HardCyt {
 . ew[0] = Empty.instanceof;
 .}
 
-
-  qq.    ...
   q@_ -> .@.
-  qq.    ...
-
-
-  q__    ...
-  q@_ -> .@.
-  qqq    ...
-
 
 == Postrules (Hold)
 
