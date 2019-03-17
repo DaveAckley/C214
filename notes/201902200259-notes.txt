@@ -1,4 +1,4 @@
-{181}  -*- text -*-
+{190}  -*- text -*-
 [0:
 
 Wed Feb 20 03:00:03 2019 OK time for an ALIFE19 paper.  The goal is
@@ -2097,9 +2097,11 @@ Sun Mar 10 14:58:49 2019 Meeting time.
 
 Sun Mar 10 16:56:20 2019 OK results from the fresh part:
 
- - Time to create QC flag base class and everbody inherit from it.
+[185: Sun Mar 10 18:45:28 2019
+DONE :185] - Time to create QC flag base class and everbody inherit from it.
 
- - Including QWorm
+[186: Sun Mar 10 18:45:36 2019
+DONE :186] - Including QWorm
 
  - [Make QWorm TEMP processing be virtual so other classes could do
    custom processing as they move down the worm.]
@@ -2111,3 +2113,64 @@ Sun Mar 10 17:01:06 2019 But let's commit first.
 :180]
 
 :179]
+[181:
+
+Sun Mar 10 17:53:57 2019 So, should Cilium be QC?  It's
+extracellular, so that could argue for 'no'.  But it certainly seems
+like a 'cellular component'..
+
+Let's say yes and see if we hate that decision later.[182:
+
+Sun Mar 10 17:57:59 2019 Saying 'mere data' quarks like QHeading and
+QVision are not QC..  Right?[183:
+
+Sun Mar 10 17:59:23 2019 OK what about QWorm.ulam?  It's already
+inheriting from SPLATInstance.  How does it inherit from QC?
+
+Now, since QC comes from QC.splat, presumably QC already inherits from
+SPLATInstance..  Can we just say 'quark QWorm : QC' and be okay?
+Maybe so.[184:
+
+Sun Mar 10 18:02:54 2019 What about Seed?  Seed is really an
+abiogenesis hack so.. let's say no.
+
+:184]
+
+
+:183]
+
+:182]
+
+:181]
+[187:
+
+Sun Mar 10 18:45:48 2019 OK critical path here is getting
+data-gathering scripts running, for which
+
+TODO
+
+[188: Mon Mar 11 02:47:15 2019 Well, AX suicide + '--haltifextinct AX'
+DONE :188] - Create AX, an Alien eXit atom that makes a log message and then
+   exits the simulation whenever it is a adjacent to anything other
+   than Empty or QC.
+
+[189: Mon Mar 11 02:48:38 2019 Have ALIFE19/data/10.mfs
+DONE :189] - Create an AX-based 'test fixture' to evaluate membrane strategies
+   in the face of DReg.
+
+ - Demo running a batch job that measures survival time.
+
+ - Create a perl script that drives batch runs and reduces the data.
+
+ - Demo collecting data on the current cilia-and-all case; decide on
+   max AEPS -- 1M ?
+
+ - Tag the repo at points representing the cases we are going to run.
+
+ - Demonstrate checking out a particular case and generate a data
+   point for that case.
+
+ - Develop dir structure for automatic tag-based data storage and
+   check-in.. 
+
+:187]
