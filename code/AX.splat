@@ -1,0 +1,35 @@
+= element AX isa QContent
+
+== Data member
+u Bool mDie = false;
+
+== Rule (Drink the Flavor Aid)
+
+given @ isa AX : $self.mDie
+vote A isa AX : $self.mDie = true
+check A : true
+
+     A             .
+    AAA           ...
+   AAAAA         .....
+  AAAAAAA       .......
+ AAAA@AAAA  -> ...._....
+  AAAAAAA       .......
+   AAAAA         .....
+    AAA           ...
+     A             .
+
+
+== Rule (Detect aliens and freak)
+
+vote X : !($curatom is Empty || $curatom is QC)
+change @ isa AX { $self.mDie = true; }
+
+    X        .
+   X@X  ->  .@.
+    X        .
+
+== Rule (hodl)
+
+   @ -> .
+
