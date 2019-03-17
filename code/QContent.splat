@@ -1,6 +1,6 @@
 #####
 #
-= quark QContent. The parent class of membrane-enclosed content
+= quark QContent isa QC. The parent class of membrane-enclosed content
 
 == Methods
 

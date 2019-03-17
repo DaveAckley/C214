@@ -1,4 +1,4 @@
-= element Swapon.  External flag to trigger leader position swapping
+= element Swapon isa QC.  External flag to trigger leader position swapping
 \symbol SO
 \color #c33
 \symmetries all

@@ -43,7 +43,7 @@ vote c {
 .  }
 .  return 1u;
 .}
-vote q isa QContent
+
 check @ {
 .  InnerMembrane & im = (InnerMembrane&) ew[0];
 .  if ($0 < 0) im.mTimer.reset();

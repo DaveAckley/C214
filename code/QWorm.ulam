@@ -1,6 +1,6 @@
 /** Base class for a 1D fragile data transport system.  To be subclassed by SPLAT code.
  */
-quark QWorm : SPLATInstance {
+quark QWorm : QC {
   typedef Unsigned(2) Ortho; // SN - 1
   typedef Unsigned(2) Type;
   constant Type cHEAD = 0u;

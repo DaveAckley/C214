@@ -1,5 +1,5 @@
 #####
-= quark QMembrane. The parent class of inner and outer membrane
+= quark QMembrane isa QC. The parent class of inner and outer membrane
 \symmetries all
 
 == Data members
@@ -79,10 +79,10 @@ check m {
 # Self-stabilization rules
 
   i_       .@
-  i@   ->  ..    # Square off (complete outer membrane)
+  i@   ->  ..    # Square off (outer)
 
   _i       i.
-  i@   ->  ..    # Square corner (complete inner membrane)
+  i@   ->  ..    # Square off (inner)
 
   nnn      ...
   n@n  ->  ._.   # Die off (eliminate isolated outer membrane)
