@@ -1,4 +1,4 @@
-{190}  -*- text -*-
+{200}  -*- text -*-
 [0:
 
 Wed Feb 20 03:00:03 2019 OK time for an ALIFE19 paper.  The goal is
@@ -1938,7 +1938,8 @@ some plausible shape, we're going to need some specific
 
 TODO
 
- - Review the status of the code regarding size, shape, and melting
+[197: Sun Mar 17 01:48:43 2019
+DONE :197] - Review the status of the code regarding size, shape, and melting
    = QHeading.ulam
 [164: Fri Mar  8 22:40:53 2019 start with the easy one
 DONE :164]   = QVision.ulam
@@ -1955,7 +1956,10 @@ DONE :172] - Set up a test situation and save it
 DONE :173] - Add debug prints to show the mDistances, the mHeading, and the
    derived shape and offset.
 
- - Use the saved test situation plus magic wand events to explore how
+[198: Sun Mar 17 01:49:03 2019 Well, we now feel that the aspect ratio
+and offset approach is a stone cold disaster.. perhaps partly because
+this is kind of
+DONE :198] - Use the saved test situation plus magic wand events to explore how
    reasonable the results look.
 
 :163]
@@ -2158,19 +2162,39 @@ DONE :188] - Create AX, an Alien eXit atom that makes a log message and then
 DONE :189] - Create an AX-based 'test fixture' to evaluate membrane strategies
    in the face of DReg.
 
- - Demo running a batch job that measures survival time.
+[191: Sun Mar 17 01:47:03 2019
+DONE :191] - Demo running a batch job that measures survival time.
 
- - Create a perl script that drives batch runs and reduces the data.
+[192: Sun Mar 17 01:47:07 2019
+DONE :192] - Create a perl script that drives batch runs and reduces the data.
 
- - Demo collecting data on the current cilia-and-all case; decide on
+[193: Sun Mar 17 01:47:16 2019 Ended up at 550KAEPS but
+DONE :193] - Demo collecting data on the current cilia-and-all case; decide on
    max AEPS -- 1M ?
 
- - Tag the repo at points representing the cases we are going to run.
+[194: Sun Mar 17 01:47:29 2019 No.  Instead just copied snaphots and
+edited, but, again
+DONE  :194] - Tag the repo at points representing the cases we are going to run.
 
- - Demonstrate checking out a particular case and generate a data
+[195: Sun Mar 17 01:47:57 2019 Woulda been cool but
+SKIPPED:195] - Demonstrate checking out a particular case and generate a data
    point for that case.
 
- - Develop dir structure for automatic tag-based data storage and
+[196: Sun Mar 17 01:48:25 2019 Ditto
+SKIPPED :196] - Develop dir structure for automatic tag-based data storage and
    check-in.. 
 
 :187]
+[190:
+
+Sun Mar 17 01:46:07 2019 OK, well the ALIFE19 paper submission
+shipped, so there's that.  Time to collect some payoff here and then
+think a little under less of a deadline.
+
+:190]
+[199:
+
+Sun Mar 17 01:50:19 2019 Time for a new notes file.  Thank you, this
+notes file; you helped a lot.
+
+:199]
