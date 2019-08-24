@@ -1,9 +1,10 @@
-SPLATTR:=/data/ackley/PART4/code/D/SPLAT/blib/script/splattr
-MFZRUN:=/data/ackley/PART4/code/D/MFM/bin/mfzrun
+SPLATTR:=/home/ackley/PART4/code/D/SPLAT/blib/script/splattr
+MFZRUN:=/home/ackley/PART4/code/D/MFM/bin/mfzrun
 MFZGEOMETRY:={{2H2}}
 MFZBIGGEOMETRY:={{1H1}}
 MFZBIG1GEOMETRY:={{1G1}}
 MFZARGS:=$(MFZGEOMETRY) -n
+MFZARGSAX:=$(MFZBIGGEOMETRY) -n --haltifextinct AX --haltafteraeps 10000 -a 0 -cp ../../../data/survivaltime/initfile/10.mfs
 MFZARGS_MOVIE_FIXEDAER:=$(MFZGEOMETRY) -n -a 0 -p 30 -e 10
 MFZARGS_MOVIE_ACC:=$(MFZBIGGEOMETRY) -n -a 0 -p 30 -e 0 --accelerate 150 --warpfactor 1
 MFZARGS_TILES_MOVIE_ACC:=$(MFZGEOMETRY) -n -a 0 -p 30 -e 0 --accelerate 150 --warpfactor 1
@@ -23,6 +24,9 @@ $(DEMO).mfz:	$(SPLAT_FILES) $(ULAM_FILES) | Makefile*
 
 run:	$(DEMO).mfz
 	$(MFZRUN) $^ run $(MFZARGS)
+
+ax:	$(DEMO).mfz
+	$(MFZRUN) $^ run $(MFZARGSAX)
 
 movie:	$(DEMO).mfz
 	$(MFZRUN) $^ run $(MFZARGS_MOVIE_FIXEDAER)
